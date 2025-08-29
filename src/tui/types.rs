@@ -14,6 +14,11 @@ pub enum KeyStatus {
     PlaySelected,
     NoOp,
 }
+impl Default for KeyStatus {
+    fn default() -> Self {
+        Self::NoOp
+    }
+}
 #[derive(Clone, Debug)]
 pub enum PlayStatus {
     Playing,

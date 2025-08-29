@@ -1,8 +1,9 @@
 use crate::tui::{theme::Theme, traits::Draw};
 
+pub mod event;
 mod theme;
 pub mod traits;
-mod types;
+pub mod types;
 
 #[derive(Default)]
 pub struct Tui {

@@ -1,6 +1,5 @@
 use ratatui::style::Color;
 
-#[derive(Clone)]
 pub struct Theme {
     pub bg: Color,           // 背景主色
     pub bg_dark: Color,      // 背景深色
