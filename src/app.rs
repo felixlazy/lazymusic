@@ -1,3 +1,4 @@
+use crate::event::{InputManager, KeyStatus};
 use crate::ui::root::RootUi;
 use crate::ui::traits::{Renderable, TitleControl};
 use std::{default::Default, error::Error};
@@ -6,6 +7,7 @@ use tokio::time::{Duration, MissedTickBehavior, interval};
 #[derive(Default)]
 pub struct App {
     ui: RootUi,
+    input: InputManager,
     runing: bool,
 }
 impl App {
@@ -35,6 +37,9 @@ impl App {
                     terminal
                         .draw(|f| self.ui.render(f))?;
                 }
+                Some(key_status)=self.input.read_event_next()=>{
+                    self.event_handle(key_status)?;
+                }
             }
         }
         ratatui::restore();
@@ -45,5 +50,24 @@ impl App {
     }
     pub fn start(&mut self) {
         self.runing = true;
+    }
+
+    fn event_handle(&mut self, key_status: KeyStatus) -> Result<(), Box<dyn std::error::Error>> {
+        match key_status {
+            KeyStatus::Quit => self.stop(),
+            KeyStatus::TogglePlay => (),
+            KeyStatus::VolumeIncrease => (),
+            KeyStatus::VolumeDecrease => (),
+            KeyStatus::ProgressIncrease => (),
+            KeyStatus::ProgressDecrease => (),
+            KeyStatus::PickerNext => (),
+            KeyStatus::PickerPrev => (),
+            KeyStatus::SwitchMode => (),
+            KeyStatus::NextTrack => (),
+            KeyStatus::PrevTrack => (),
+            KeyStatus::PlaySelected => (),
+            KeyStatus::NoOp => (),
+        }
+        Ok(())
     }
 }
