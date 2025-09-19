@@ -1,6 +1,10 @@
+use ratatui::layout::Alignment;
 use tokio::time::{self, Duration, Interval, MissedTickBehavior, interval};
 
 use crate::event::{EventHandler, KeyStatus};
+use crate::tui::theme::TuiTheme;
+use crate::tui::traits::{TuiBorder, TuiTitle};
+use crate::tui::{root::RootTui, traits::DrawTui};
 use std::error::Error;
 
 /// 主应用结构体，用于管理 TUI 应用的运行状态、按键事件和刷新定时器
@@ -8,6 +12,7 @@ pub struct App {
     running: bool,          // 程序是否正在运行
     event: EventHandler,    // 异步事件处理器，用于监听按键事件
     tui_interval: Interval, // TUI 刷新定时器，每隔一段时间触发一次
+    root_tui: RootTui,
 }
 
 impl Default for App {
@@ -17,10 +22,25 @@ impl Default for App {
         // 配置定时器，错过 tick 时跳过，不累积等待
         tui_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
+        let theme = TuiTheme::default();
+
+        let mut root_tui = RootTui::default();
+
+        root_tui.set_border(true);
+        root_tui.set_border_theme(theme.blue);
+
+        root_tui.set_title("lazy music".to_string());
+        root_tui.set_title_italic(true);
+        root_tui.set_title_foreground(theme.blue);
+        root_tui.set_title_background(theme.bg_dark);
+        root_tui.enable_title(true);
+        root_tui.set_title_alignment(Alignment::Center);
+
         Self {
             running: Default::default(), // 默认未运行
             event: Default::default(),   // 默认事件处理器
             tui_interval,                // 默认刷新间隔 500ms
+            root_tui,
         }
     }
 }
@@ -50,7 +70,7 @@ impl App {
                 // 定时器触发事件，定时器触发更新一次 UI
                 _ = self.tui_interval.tick() => {
                     // 这里绘制 UI（当前例子为空实现）
-                    terminal.draw(|_f| ())?;
+                    terminal.draw(|f| self.root_tui.draw(f,f.area()))?;
                 }
             }
         }
