@@ -15,3 +15,8 @@ pub trait HasBorderStyle {
     fn borders(&self) -> Borders;
     fn has_border(&self) -> bool;
 }
+
+pub trait HasTuiStyle {
+    fn bg(&self) -> Color;
+    fn fg(&self) -> Color;
+}

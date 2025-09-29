@@ -48,3 +48,20 @@ impl Default for BorderStyle {
         }
     }
 }
+
+#[derive(Accessor)]
+pub struct TuiStyle {
+    #[Accessor(Copy)]
+    fg: Color,
+    #[Accessor(Copy)]
+    bg: Color,
+}
+
+impl Default for TuiStyle {
+    fn default() -> Self {
+        Self {
+            fg: Color::Rgb(130, 170, 255), // #82aaff
+            bg: Color::Rgb(34, 36, 54),    // #222436
+        }
+    }
+}
