@@ -351,6 +351,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy-macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "lazy-tui"
 version = "0.1.0"
 dependencies = [
