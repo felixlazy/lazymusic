@@ -1,11 +1,13 @@
 use std::error::Error;
 
+use lazy_tui::root::RootTui;
 use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
 
 use crate::event::{EventHandler, KeyStatus};
 pub struct App {
     running: bool,
     event: EventHandler,
+    tui: RootTui,
     tui_interval: Interval,
 }
 impl Default for App {
@@ -16,6 +18,7 @@ impl Default for App {
         Self {
             running: Default::default(),
             event: Default::default(),
+            tui: Default::default(),
             tui_interval,
         }
     }
@@ -41,7 +44,7 @@ impl App {
                 // 定时器触发事件，定时器触发更新一次 UI
                 _ = self.tui_interval.tick() => {
                     // 这里绘制 UI（当前例子为空实现）
-                    terminal.draw(|_f| ())?;
+                    terminal.draw(|f| self.tui.render(f))?;
                 }
             }
         }
