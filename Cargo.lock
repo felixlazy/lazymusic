@@ -344,9 +344,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy-core"
+version = "0.1.0"
+dependencies = [
+ "ratatui",
+]
+
+[[package]]
 name = "lazy-tui"
 version = "0.1.0"
 dependencies = [
+ "lazy-core",
  "ratatui",
 ]
 
