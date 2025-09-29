@@ -337,7 +337,6 @@ name = "lazy-app"
 version = "0.1.0"
 dependencies = [
  "crossterm 0.29.0",
- "lazy-core",
  "lazy-tui",
  "ratatui",
  "tokio",
