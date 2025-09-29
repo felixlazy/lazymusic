@@ -1,5 +1,5 @@
 use syn::{
-    Data::Struct, DataStruct, DeriveInput, Field, Fields::Named, Meta, Result, Token,
+    Data::Struct, DataStruct, DeriveInput, Error, Field, Fields::Named, Meta, Result, Token,
     punctuated::Punctuated, spanned::Spanned,
 };
 
@@ -28,4 +28,17 @@ pub(crate) fn extract_named_field(
         // 使用 derive.span() 定位错误，返回编译错误信息
         Err(syn::Error::new(derive.span(), "不是具名字段结构体"))
     }
+}
+
+pub(crate) fn get_field_attribute_args(
+    field: &Field,
+    name: impl AsRef<str>,
+) -> Result<Punctuated<Meta, Token![,]>> {
+    for attr in &field.attrs {
+        if attr.path().is_ident(name.as_ref()) {
+            let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
+            return Ok(nested);
+        }
+    }
+    Err(Error::new_spanned(field, "没有属性"))
 }
