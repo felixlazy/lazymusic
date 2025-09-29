@@ -20,6 +20,8 @@ pub(crate) fn expand_has_title_style(ast: &DeriveInput) -> Result<proc_macro2::T
                 && segments.ident == "TitleStyle"
             {
                 quote! {
+                    use lazy_core::traits::{ HasTitleStyle,HasTitleStyleSetter};
+
                     impl HasTitleStyle for #struct_ident {
                         fn title_style(&self) -> ratatui::style::Style {
                             ratatui::style::Style::default()
@@ -36,6 +38,28 @@ pub(crate) fn expand_has_title_style(ast: &DeriveInput) -> Result<proc_macro2::T
                         fn title_text(&self) -> &str {
                             self.#name.text().as_str()
                         }
+                    }
+                    impl HasTitleStyleSetter for #struct_ident{
+                        fn set_title_text(&mut self, text: String){
+                            self.#name.set_text(text);
+                        }
+
+                        fn set_title_alignment(&mut self, alignment: ratatui::layout::Alignment){
+                            self.#name.set_alignment(alignment)
+                        }
+
+                        fn set_title_modifier(&mut self, modifier: ratatui::style::Modifier){
+                            self.#name.set_modifier(modifier)
+                        }
+
+                        fn set_title_fg(&mut self, fg: ratatui::style::Color){
+                            self.#name.set_fg(fg);
+                        }
+
+                        fn set_title_bg(&mut self, bg:ratatui::style::Color){
+                            self.#name.set_bg(bg);
+                        }
+
                     }
                 }
             } else {

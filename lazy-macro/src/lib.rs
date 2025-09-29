@@ -18,8 +18,8 @@ pub fn derive_acessor(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     }
 }
 
-#[proc_macro_derive(ImplHasTitleStyle)]
-pub fn derive_impl_has_title_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(DeriveHasTitleStyle)]
+pub fn derive_has_title_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
     match expand_has_title_style(&ast) {
         Ok(token_stream) => token_stream.into(),
@@ -27,8 +27,8 @@ pub fn derive_impl_has_title_style(input: proc_macro::TokenStream) -> proc_macro
     }
 }
 
-#[proc_macro_derive(ImplHasBorderStyle)]
-pub fn derive_impl_has_border_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(DeriveHasBorderStyle)]
+pub fn derive_has_border_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
     match expand_has_border_style(&ast) {
         Ok(token_stream) => token_stream.into(),
@@ -36,8 +36,8 @@ pub fn derive_impl_has_border_style(input: proc_macro::TokenStream) -> proc_macr
     }
 }
 
-#[proc_macro_derive(ImplHasTuiStyle)]
-pub fn derive_impl_has_tui_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+#[proc_macro_derive(DeriveHasTuiStyle)]
+pub fn derive_has_tui_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
     match expand_has_tui_style(&ast) {
         Ok(token_stream) => token_stream.into(),

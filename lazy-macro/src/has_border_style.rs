@@ -20,8 +20,10 @@ pub(crate) fn expand_has_border_style(ast: &DeriveInput) -> Result<proc_macro2::
                 && segments.ident == "BorderStyle"
             {
                 quote! {
+                    use lazy_core::traits::{ HasBorderStyle,HasBorderStyleSetter};
+
                     impl HasBorderStyle for #struct_ident {
-                    fn border_style(&self) -> ratatui::style::Style {
+                        fn border_style(&self) -> ratatui::style::Style {
                             ratatui::style::Style::default().bg(self.#name.bg()).fg(self.border.fg())
                         }
 
@@ -32,6 +34,19 @@ pub(crate) fn expand_has_border_style(ast: &DeriveInput) -> Result<proc_macro2::
                         fn borders(&self) -> ratatui::widgets::Borders {
                             self.#name.border()
                         }
+                    }
+
+                    impl HasBorderStyleSetter for #struct_ident{
+                        fn set_border(&mut self, border:ratatui::widgets::Borders){
+                            self.#name.set_border(border);
+                        }
+                        fn set_border_fg(&mut self, fg: ratatui::style::Color){
+                            self.#name.set_fg(fg);
+                        }
+                        fn set_border_bg(&mut self, bg: ratatui::style::Color){
+                            self.#name.set_fg(bg);
+                        }
+
                     }
                 }
             } else {

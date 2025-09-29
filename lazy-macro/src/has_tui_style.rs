@@ -20,14 +20,27 @@ pub(crate) fn expand_has_tui_style(ast: &DeriveInput) -> Result<proc_macro2::Tok
                 && segments.ident == "TuiStyle"
             {
                 quote! {
+                    use lazy_core::traits::{ HasTuiStyle,HasTuiStyleSetter};
+
                     impl HasTuiStyle for #struct_ident {
-                    fn bg(&self) -> ratatui::style::Color {
-                        self.#name.bg()
+                        fn bg(&self) -> ratatui::style::Color {
+                            self.#name.bg()
+                        }
+
+                        fn fg(&self) -> ratatui::style::Color {
+                            self.#name.fg()
+                        }
+
                     }
 
-                    fn fg(&self) -> ratatui::style::Color {
-                        self.#name.fg()
-                    }
+                    impl HasTuiStyleSetter for #struct_ident{
+                        fn set_tui_bg(&mut self, bg:ratatui::style::Color){
+                            self.#name.set_bg(bg);
+                        }
+
+                        fn set_tui_fg(&mut self, fg: ratatui::style::Color){
+                            self.#name.set_fg(fg);
+                        }
 
                     }
                 }
