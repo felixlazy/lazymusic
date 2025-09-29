@@ -2,8 +2,10 @@ use std::error::Error;
 
 use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
 
+use crate::event::{EventHandler, KeyStatus};
 pub struct App {
     running: bool,
+    event: EventHandler,
     tui_interval: Interval,
 }
 impl Default for App {
@@ -13,6 +15,7 @@ impl Default for App {
 
         Self {
             running: Default::default(),
+            event: Default::default(),
             tui_interval,
         }
     }
@@ -28,6 +31,13 @@ impl App {
         // 主循环：程序运行期间不断处理事件和定时器
         while self.running {
             tokio::select! {
+                // 异步等待按键事件
+                key_status = self.event.next_key_status() => {
+                    if let Some(key) = key_status {
+                        // 如果有按键事件，调用事件处理器
+                        self.event_handler(key);
+                    }
+                }
                 // 定时器触发事件，定时器触发更新一次 UI
                 _ = self.tui_interval.tick() => {
                     // 这里绘制 UI（当前例子为空实现）
@@ -63,5 +73,24 @@ impl App {
         new_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
         // 配置错过 tick 时跳过
         self.tui_interval = new_interval; // 替换原有定时器
+    }
+
+    /// 处理按键事件，将 KeyStatus 映射为具体操作
+    fn event_handler(&mut self, key_status: KeyStatus) {
+        match key_status {
+            KeyStatus::Quit => self.stop(),    // q → 退出程序
+            KeyStatus::TogglePlay => (),       // p → 播放/暂停
+            KeyStatus::VolumeIncrease => (),   // + → 增加音量
+            KeyStatus::VolumeDecrease => (),   // - → 减少音量
+            KeyStatus::ProgressIncrease => (), // l → 快进
+            KeyStatus::ProgressDecrease => (), // h → 快退
+            KeyStatus::PickerNext => (),       // j → 选择下一个
+            KeyStatus::PickerPrev => (),       // k → 选择上一个
+            KeyStatus::SwitchMode => (),       // m → 切换模式
+            KeyStatus::NextTrack => (),        // ] → 下一首
+            KeyStatus::PrevTrack => (),        // [ → 上一首
+            KeyStatus::PlaySelected => (),     // Enter → 播放选中
+            KeyStatus::NoOp => (),             // 无操作
+        }
     }
 }
