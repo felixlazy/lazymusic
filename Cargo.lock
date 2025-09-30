@@ -364,6 +364,8 @@ dependencies = [
 name = "lazy-tui"
 version = "0.1.0"
 dependencies = [
+ "lazy-core",
+ "lazy-macro",
  "ratatui",
 ]
 
