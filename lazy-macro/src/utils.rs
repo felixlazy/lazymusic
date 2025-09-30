@@ -1,5 +1,5 @@
 use syn::{
-    Data::Struct, DataStruct, DeriveInput, Error, Field, Fields::Named, Meta, Result, Token,
+    Data::Struct, DataStruct, DeriveInput, Error, Field, Fields::Named, Meta, Result, Token, Type,
     punctuated::Punctuated, spanned::Spanned,
 };
 
@@ -41,4 +41,13 @@ pub(crate) fn get_field_attribute_args(
         }
     }
     Err(Error::new_spanned(field, "没有属性"))
+}
+/// 检查字段类型是否属于给定类型名集合
+pub(crate) fn has_field_ty(ty: &syn::Type, ty_names: &[&str]) -> bool {
+    if let syn::Type::Path(path) = ty
+        && let Some(seg) = path.path.segments.last()
+    {
+        return ty_names.iter().any(|name| seg.ident == *name);
+    }
+    false
 }
