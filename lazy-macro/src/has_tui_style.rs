@@ -74,6 +74,14 @@ fn gen_border_style_impl(
             fn set_border(&mut self, border: ratatui::widgets::Borders) { self.#field_name.set_border(border); }
             fn set_border_fg(&mut self, fg: ratatui::style::Color) { self.#field_name.set_fg(fg); }
             fn set_border_bg(&mut self, bg: ratatui::style::Color) { self.#field_name.set_bg(bg); }
+            fn toggle_border(&mut self) {
+                let new_border = if self.#field_name.border() == ratatui::widgets::Borders::NONE {
+                    ratatui::widgets::Borders::ALL
+                } else {
+                    ratatui::widgets::Borders::NONE
+                };
+                self.#field_name.set_border(new_border);
+            }
         }
     }
 }
