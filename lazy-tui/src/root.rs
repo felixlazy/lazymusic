@@ -1,7 +1,10 @@
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{Frame, layout::Rect};
 
-use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
+use lazy_core::{
+    structs::{BorderStyle, TitleStyle, TuiStyle},
+    traits::HasBorderStyleSetter,
+};
 
 use crate::{
     player::PlayerTui,
@@ -31,6 +34,12 @@ impl RootTui {
     /// 设置当前播放曲目，代理到 PlayerTui
     pub fn set_track(&mut self, track: String) {
         self.player.track.set_track(track);
+    }
+
+    /// 切换当前组件及其子组件的边框显示状态
+    pub fn toggle_all_border(&mut self) {
+        self.toggle_border();
+        self.player.toggle_border();
     }
 }
 

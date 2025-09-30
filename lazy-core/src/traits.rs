@@ -65,6 +65,9 @@ pub trait HasBorderStyleSetter {
 
     /// 设置边框背景色
     fn set_border_bg(&mut self, bg: Color);
+
+    /// 切换边框
+    fn toggle_border(&mut self);
 }
 
 /// 修改整体 TUI 样式
