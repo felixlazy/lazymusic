@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use lazy_tui::root::RootTui;
+use lazy_tui::{root::RootTui, traits::RenderTui};
 use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
 
 use crate::event::{EventHandler, KeyStatus};
@@ -12,7 +12,7 @@ pub struct App {
 }
 impl Default for App {
     fn default() -> Self {
-        let mut tui_interval = interval(Duration::from_millis(500));
+        let mut tui_interval = interval(Duration::from_millis(100));
         tui_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
         Self {
@@ -44,7 +44,7 @@ impl App {
                 // 定时器触发事件，定时器触发更新一次 UI
                 _ = self.tui_interval.tick() => {
                     // 这里绘制 UI（当前例子为空实现）
-                    terminal.draw(|f| self.tui.render(f))?;
+                    terminal.draw(|f| self.tui.render(f,f.area()))?;
                 }
             }
         }
@@ -81,19 +81,19 @@ impl App {
     /// 处理按键事件，将 KeyStatus 映射为具体操作
     fn event_handler(&mut self, key_status: KeyStatus) {
         match key_status {
-            KeyStatus::Quit => self.stop(),    // q → 退出程序
-            KeyStatus::TogglePlay => (),       // p → 播放/暂停
-            KeyStatus::VolumeIncrease => (),   // + → 增加音量
-            KeyStatus::VolumeDecrease => (),   // - → 减少音量
-            KeyStatus::ProgressIncrease => (), // l → 快进
-            KeyStatus::ProgressDecrease => (), // h → 快退
-            KeyStatus::PickerNext => (),       // j → 选择下一个
-            KeyStatus::PickerPrev => (),       // k → 选择上一个
-            KeyStatus::SwitchMode => (),       // m → 切换模式
-            KeyStatus::NextTrack => (),        // ] → 下一首
-            KeyStatus::PrevTrack => (),        // [ → 上一首
-            KeyStatus::PlaySelected => (),     // Enter → 播放选中
-            KeyStatus::NoOp => (),             // 无操作
+            KeyStatus::Quit => self.stop(),                   // q → 退出程序
+            KeyStatus::TogglePlay => self.tui.toggle_state(), // p → 播放/暂停
+            KeyStatus::VolumeIncrease => self.tui.adjust_volume(10), // + → 增加音量
+            KeyStatus::VolumeDecrease => self.tui.adjust_volume(-10), // - → 减少音量
+            KeyStatus::ProgressIncrease => (),                // l → 快进
+            KeyStatus::ProgressDecrease => (),                // h → 快退
+            KeyStatus::PickerNext => (),                      // j → 选择下一个
+            KeyStatus::PickerPrev => (),                      // k → 选择上一个
+            KeyStatus::SwitchMode => (),                      // m → 切换模式
+            KeyStatus::NextTrack => (),                       // ] → 下一首
+            KeyStatus::PrevTrack => (),                       // [ → 上一首
+            KeyStatus::PlaySelected => (),                    // Enter → 播放选中
+            KeyStatus::NoOp => (),                            // 无操作
         }
     }
 }
