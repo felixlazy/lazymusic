@@ -1,5 +1,5 @@
 use syn::{
-    Data::Struct, DataStruct, DeriveInput, Error, Field, Fields::Named, Meta, Result, Token, Type,
+    Data::Struct, DataStruct, DeriveInput, Error, Field, Fields::Named, Meta, Result, Token,
     punctuated::Punctuated, spanned::Spanned,
 };
 

@@ -1,6 +1,6 @@
-use crate::utils::{extract_named_field, has_field_ty};
+use crate::utils::{extract_named_field, get_field_attribute_args, has_field_ty};
 use quote::quote;
-use syn::{DeriveInput, Result};
+use syn::{DeriveInput, Meta, Result};
 
 /// 为字段类型是 TuiStyle 的字段生成 trait impl
 fn gen_tui_style_impl(
@@ -9,11 +9,18 @@ fn gen_tui_style_impl(
 ) -> proc_macro2::TokenStream {
     quote! {
         impl lazy_core::traits::HasTuiStyle for #struct_ident {
-            fn bg(&self) -> ratatui::style::Color { self.#field_name.bg() }
-            fn fg(&self) -> ratatui::style::Color { self.#field_name.fg() }
+            fn tui_style(&self) -> ratatui::style::Style {
+                ratatui::style::Style::default()
+                    .bg(self.#field_name.bg())
+                    .fg(self.#field_name.fg())
+                    .add_modifier(self.#field_name.modifier())
+            }
+            fn tui_alignment(&self) -> ratatui::layout::Alignment { self.#field_name.alignment() }
         }
 
         impl lazy_core::traits::HasTuiStyleSetter for #struct_ident {
+            fn set_tui_alignment(&mut self, alignment: ratatui::layout::Alignment) { self.#field_name.set_alignment(alignment); }
+            fn set_tui_modifier(&mut self, modifier: ratatui::style::Modifier) { self.#field_name.set_modifier(modifier); }
             fn set_tui_bg(&mut self, bg: ratatui::style::Color) { self.#field_name.set_bg(bg); }
             fn set_tui_fg(&mut self, fg: ratatui::style::Color) { self.#field_name.set_fg(fg); }
         }
@@ -81,7 +88,13 @@ pub(crate) fn expand_has_tui_style(ast: &DeriveInput) -> Result<proc_macro2::Tok
         .map(|f| {
             let name = f.ident.as_ref().expect("字段必须有名字");
             let ty = &f.ty;
-
+            if get_field_attribute_args(f, "DeriveHasTuiStyle")
+                .unwrap_or_default()
+                .iter()
+                .any(|meta| matches!(meta, Meta::Path(p) if p.is_ident("None")))
+            {
+                return quote! {};
+            }
             if has_field_ty(ty, &["TuiStyle"]) {
                 gen_tui_style_impl(struct_ident, name)
             } else if has_field_ty(ty, &["TitleStyle"]) {

@@ -63,7 +63,7 @@ pub struct BorderStyle {
 impl Default for BorderStyle {
     fn default() -> Self {
         Self {
-            border: Borders::NONE,
+            border: Borders::ALL,
             fg: Color::Rgb(130, 170, 255), // 默认前景色 #82aaff
             bg: Color::Rgb(34, 36, 54),    // 默认背景色 #222436
         }
@@ -82,6 +82,14 @@ pub struct TuiStyle {
     /// 背景色，自动生成 getter/setter 并实现 Copy
     #[Accessor(Copy)]
     bg: Color,
+
+    /// 标题对齐方式（居中/左/右），自动生成 getter/setter 并实现 Copy
+    #[Accessor(Copy)]
+    alignment: Alignment,
+
+    /// 标题修饰符（如加粗、斜体），自动生成 getter/setter 并实现 Copy
+    #[Accessor(Copy)]
+    modifier: Modifier,
 }
 
 impl Default for TuiStyle {
@@ -89,6 +97,8 @@ impl Default for TuiStyle {
         Self {
             fg: Color::Rgb(130, 170, 255), // 默认前景色 #82aaff
             bg: Color::Rgb(34, 36, 54),    // 默认背景色 #222436
+            alignment: Alignment::Center,
+            modifier: Modifier::ITALIC,
         }
     }
 }

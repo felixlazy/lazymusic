@@ -30,11 +30,11 @@ pub trait HasBorderStyle {
 
 /// 提供整体 TUI 样式信息（背景/前景色）
 pub trait HasTuiStyle {
-    /// 获取组件背景色
-    fn bg(&self) -> Color;
+    /// 获取整体样式（颜色、修饰符等）
+    fn tui_style(&self) -> Style;
 
-    /// 获取组件前景色
-    fn fg(&self) -> Color;
+    /// 获取的对齐方式
+    fn tui_alignment(&self) -> Alignment;
 }
 
 /// 修改标题样式
@@ -74,4 +74,10 @@ pub trait HasTuiStyleSetter {
 
     /// 设置组件前景色
     fn set_tui_fg(&mut self, color: Color);
+
+    /// 设置对齐方式
+    fn set_tui_alignment(&mut self, alignment: Alignment);
+
+    /// 设置修饰符（加粗、斜体等）
+    fn set_tui_modifier(&mut self, modifier: Modifier);
 }

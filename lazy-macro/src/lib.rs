@@ -13,7 +13,7 @@ pub fn derive_acessor(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     }
 }
 
-#[proc_macro_derive(DeriveHasTuiStyle)]
+#[proc_macro_derive(DeriveHasTuiStyle, attributes(DeriveHasTuiStyle))]
 pub fn derive_has_tui_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
     match expand_has_tui_style(&ast) {
