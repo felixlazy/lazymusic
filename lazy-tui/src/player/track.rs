@@ -1,14 +1,20 @@
+//! `TrackTui` 模块，用于在 TUI 中显示当前播放的曲目信息。
+
+// 从 lazy_core 中导入 TuiStyle 结构体和 HasTuiStyle trait
 use lazy_core::{structs::TuiStyle, traits::HasTuiStyle};
+// 导入宏，用于自动派生 trait
 use lazy_macro::DeriveHasTuiStyle;
+// 从 ratatui 中导入所需的组件和布局
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
     widgets::Paragraph,
 };
 
+// 从当前 crate 中导入 RenderTui trait
 use crate::traits::RenderTui;
 
-/// TrackTui 用于在 TUI 中显示当前播放曲目
+/// `TrackTui` 用于在 TUI 中显示当前播放曲目。
 #[derive(DeriveHasTuiStyle)] // 自动派生 HasTuiStyle trait，实现 tui_style() 和 tui_alignment() 等方法
 pub struct TrackTui {
     track: String,   // 当前曲目名称
@@ -16,42 +22,65 @@ pub struct TrackTui {
 }
 
 impl Default for TrackTui {
+    /// 创建一个默认的 `TrackTui` 实例。
     fn default() -> Self {
-        let mut style = TuiStyle::default(); // 初始化默认样式
-        style.set_alignment(Alignment::Center); // 默认文本居中显示
+        // 初始化默认样式
+        let mut style = TuiStyle::default();
+        // 默认文本居中显示
+        style.set_alignment(Alignment::Center);
         Self {
-            track: "lazy music".to_string(), // 默认曲目名称
+            // 默认曲目名称
+            track: "lazy music".to_string(),
             style,
         }
     }
 }
 
 impl RenderTui for TrackTui {
-    /// 渲染函数，将 TrackTui 显示在指定矩形区域
+    /// 渲染函数，将 `TrackTui` 显示在指定的矩形区域。
+    ///
+    /// # Arguments
+    ///
+    /// * `frame` - `ratatui` 的 `Frame`，用于绘制。
+    /// * `rect` - 要渲染的区域。
     fn render(&self, frame: &mut Frame, rect: Rect) {
-        let widget = Paragraph::new(self.track()) // 创建 Paragraph 小部件，显示曲目名称
-            .style(self.tui_style()) // 应用样式（颜色、粗体等）
-            .alignment(self.tui_alignment()); // 应用对齐方式
-        frame.render_widget(widget, rect); // 在 frame 的指定 rect 区域渲染
+        // 创建 Paragraph 小部件，用于显示曲目名称
+        let widget = Paragraph::new(self.track())
+            // 应用样式（颜色、粗体等）
+            .style(self.tui_style())
+            // 应用对齐方式
+            .alignment(self.tui_alignment());
+        // 在 frame 的指定 rect 区域渲染 widget
+        frame.render_widget(widget, rect);
     }
 
+    /// 将 `self` 转换为 `&dyn Any`。
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 
+    /// 将 `self` 转换为 `&mut dyn Any`。
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
 }
 
 impl TrackTui {
-    /// 获取当前曲目名称的引用
+    /// 获取当前曲目名称的引用。
     pub(crate) fn track(&self) -> &str {
-        self.track.as_str()
+        &self.track
     }
 
-    /// 设置曲目名称
-    pub(crate) fn set_track(&mut self, track: String) {
-        self.track = track;
+    /// 设置曲目名称。
+    ///
+    /// 使用泛型 `T` 和 `Into<String>` trait bound，
+    /// 使得可以接受任何可以转换为 `String` 的类型作为参数，
+    /// 例如 `&str` 或 `String`。
+    pub(crate) fn set_track<T>(&mut self, track: T)
+    where
+        T: Into<String>,
+    {
+        self.track = track.into();
     }
 }
+
