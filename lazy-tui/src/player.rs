@@ -1,3 +1,6 @@
+mod playback;
+mod track;
+mod volume;
 use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{
@@ -5,12 +8,8 @@ use ratatui::{
     layout::{Constraint, Layout, Rect},
 };
 
-use crate::{
-    playback::PlaybackTui,
-    track::TrackTui,
-    traits::{RenderTui, TuiBlock},
-    volume::VolumeTui,
-};
+use crate::player::{playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
+use crate::traits::{RenderTui, TuiBlock};
 
 /// PlayerTui 是整体播放器 TUI 组件
 #[derive(DeriveHasTuiStyle, Default)]
