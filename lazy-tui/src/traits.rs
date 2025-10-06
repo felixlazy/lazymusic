@@ -27,3 +27,13 @@ pub trait RenderTui: Any {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
+
+pub trait HasWidgets {
+    fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>>;
+
+    fn get_widget_mut<T: 'static>(&mut self) -> Option<&mut T> {
+        self.get_widgets_mut()
+            .iter_mut()
+            .find_map(|widget| widget.as_any_mut().downcast_mut::<T>())
+    }
+}

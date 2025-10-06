@@ -8,7 +8,7 @@ use lazy_core::{
 
 use crate::{
     player::PlayerTui,
-    traits::{RenderTui, TuiBlock}, // RenderTui 用于渲染，TuiBlock 用于生成边框块
+    traits::{HasWidgets, RenderTui, TuiBlock}, // RenderTui 用于渲染，TuiBlock 用于生成边框块
 };
 
 /// 根 TUI 组件，作为整个播放器界面的容器
@@ -31,36 +31,30 @@ impl Default for RootTui {
     }
 }
 
+impl HasWidgets for RootTui {
+    fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>> {
+        &mut self.widgets
+    }
+}
+
 impl RootTui {
     /// 调整音量，代理到子组件 PlayerTui
     pub fn adjust_volume(&mut self, delta: i8) {
-        if let Some(player) = self
-            .widgets
-            .iter_mut()
-            .find_map(|w| w.as_any_mut().downcast_mut::<PlayerTui>())
-        {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.adjust_volume(delta);
         }
     }
 
     /// 切换播放状态（播放/暂停），代理到 PlayerTui
     pub fn toggle_state(&mut self) {
-        if let Some(player) = self
-            .widgets
-            .iter_mut()
-            .find_map(|w| w.as_any_mut().downcast_mut::<PlayerTui>())
-        {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.toggle_state();
         }
     }
 
     /// 设置当前播放曲目，代理到 PlayerTui
     pub fn set_track(&mut self, track: String) {
-        if let Some(player) = self
-            .widgets
-            .iter_mut()
-            .find_map(|w| w.as_any_mut().downcast_mut::<PlayerTui>())
-        {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.set_track(track);
         }
     }
@@ -68,10 +62,8 @@ impl RootTui {
     /// 切换当前组件及其子组件的边框显示状态
     pub fn toggle_all_border(&mut self) {
         self.toggle_border();
-        for widget in self.widgets.iter_mut() {
-            if let Some(player) = widget.as_any_mut().downcast_mut::<PlayerTui>() {
-                player.toggle_border();
-            }
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
+            player.toggle_border();
         }
     }
 }

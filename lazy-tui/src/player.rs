@@ -9,7 +9,7 @@ use ratatui::{
 };
 
 use crate::player::{playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
-use crate::traits::{RenderTui, TuiBlock};
+use crate::traits::{HasWidgets, RenderTui, TuiBlock};
 
 /// PlayerTui 是整体播放器 TUI 组件
 #[derive(DeriveHasTuiStyle)]
@@ -70,36 +70,27 @@ impl RenderTui for PlayerTui {
     }
 }
 
+impl HasWidgets for PlayerTui {
+    fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>> {
+        &mut self.widgets
+    }
+}
+
 impl PlayerTui {
     pub fn adjust_volume(&mut self, delta: i8) {
-        // 寻找第一个可以被 downcast 成 VolumeTui 的 widget
-        if let Some(volume_tui) = self
-            .widgets
-            .iter_mut()
-            .find_map(|widget| widget.as_any_mut().downcast_mut::<VolumeTui>())
-        {
-            // 如果找到了，就调整音量
+        if let Some(volume_tui) = self.get_widget_mut::<VolumeTui>() {
             volume_tui.adjust_volume(delta);
         }
-        // 函数在这里自然结束
     }
 
     pub fn toggle_state(&mut self) {
-        if let Some(playback_tui) = self
-            .widgets
-            .iter_mut()
-            .find_map(|widget| widget.as_any_mut().downcast_mut::<PlaybackTui>())
-        {
+        if let Some(playback_tui) = self.get_widget_mut::<PlaybackTui>() {
             playback_tui.toggle_state();
         }
     }
 
     pub fn set_track(&mut self, track: String) {
-        if let Some(track_tui) = self
-            .widgets
-            .iter_mut()
-            .find_map(|widget| widget.as_any_mut().downcast_mut::<TrackTui>())
-        {
+        if let Some(track_tui) = self.get_widget_mut::<TrackTui>() {
             track_tui.set_track(track);
         }
     }
