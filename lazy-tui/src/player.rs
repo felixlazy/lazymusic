@@ -12,14 +12,27 @@ use crate::player::{playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
 use crate::traits::{RenderTui, TuiBlock};
 
 /// PlayerTui 是整体播放器 TUI 组件
-#[derive(DeriveHasTuiStyle, Default)]
+#[derive(DeriveHasTuiStyle)]
 pub struct PlayerTui {
-    title: TitleStyle,                      // 标题样式
-    border: BorderStyle,                    // 边框样式
-    style: TuiStyle,                        // 通用样式（颜色、对齐等）
-    pub(crate) volume: VolumeTui,           // 音量组件
-    pub(crate) playback_state: PlaybackTui, // 播放状态组件（播放/暂停/停止）
-    pub(crate) track: TrackTui,             // 当前播放曲目组件
+    title: TitleStyle,                // 标题样式
+    border: BorderStyle,              // 边框样式
+    style: TuiStyle,                  // 通用样式（颜色、对齐等）
+    widgets: Vec<Box<dyn RenderTui>>, // 所有实现了 RenderTui 的组件
+}
+
+impl Default for PlayerTui {
+    fn default() -> Self {
+        Self {
+            title: Default::default(),
+            border: Default::default(),
+            style: Default::default(),
+            widgets: vec![
+                Box::new(PlaybackTui::default()),
+                Box::new(TrackTui::default()),
+                Box::new(VolumeTui::default()),
+            ],
+        }
+    }
 }
 
 impl RenderTui for PlayerTui {
@@ -32,17 +45,62 @@ impl RenderTui for PlayerTui {
         let inner = self.get_inner(rect);
 
         // 使用水平布局将 rect 分成 3 个区域
-        // 分别用于播放状态、曲目显示和音量显示
-        let [playback_state_rect, track_rect, volume_rect] = Layout::horizontal([
-            Constraint::Percentage(20), // 播放状态占 20%
-            Constraint::Percentage(60), // 曲目显示占 60%
-            Constraint::Percentage(20), // 音量占 20%
+        // 注意：这里的布局和 widgets vector 中的组件顺序是对应的
+        let chunks = Layout::horizontal([
+            Constraint::Percentage(20), // 对应 PlaybackTui
+            Constraint::Percentage(60), // 对应 TrackTui
+            Constraint::Percentage(20), // 对应 VolumeTui
         ])
-        .areas(inner); // 将原始 rect 分割成子区域
+        .split(inner); // 将原始 rect 分割成子区域
 
         // 渲染各个子组件
-        self.volume.render(frame, volume_rect);
-        self.track.render(frame, track_rect);
-        self.playback_state.render(frame, playback_state_rect);
+        for (i, widget) in self.widgets.iter().enumerate() {
+            if let Some(chunk) = chunks.get(i) {
+                widget.render(frame, *chunk);
+            }
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+}
+
+impl PlayerTui {
+    pub fn adjust_volume(&mut self, delta: i8) {
+        // 寻找第一个可以被 downcast 成 VolumeTui 的 widget
+        if let Some(volume_tui) = self
+            .widgets
+            .iter_mut()
+            .find_map(|widget| widget.as_any_mut().downcast_mut::<VolumeTui>())
+        {
+            // 如果找到了，就调整音量
+            volume_tui.adjust_volume(delta);
+        }
+        // 函数在这里自然结束
+    }
+
+    pub fn toggle_state(&mut self) {
+        if let Some(playback_tui) = self
+            .widgets
+            .iter_mut()
+            .find_map(|widget| widget.as_any_mut().downcast_mut::<PlaybackTui>())
+        {
+            playback_tui.toggle_state();
+        }
+    }
+
+    pub fn set_track(&mut self, track: String) {
+        if let Some(track_tui) = self
+            .widgets
+            .iter_mut()
+            .find_map(|widget| widget.as_any_mut().downcast_mut::<TrackTui>())
+        {
+            track_tui.set_track(track);
+        }
     }
 }

@@ -1,5 +1,6 @@
 use lazy_core::traits::{HasBorderStyle, HasTitleStyle, HasTuiStyle};
 use ratatui::{Frame, layout::Rect, widgets::Block};
+use std::any::Any;
 
 pub trait TuiBlock: HasTitleStyle + HasBorderStyle + HasTuiStyle {
     fn to_block(&self) -> Block<'_> {
@@ -21,6 +22,8 @@ pub trait TuiBlock: HasTitleStyle + HasBorderStyle + HasTuiStyle {
 }
 
 impl<U> TuiBlock for U where U: HasBorderStyle + HasTitleStyle + HasTuiStyle {}
-pub trait RenderTui {
+pub trait RenderTui: Any {
     fn render(&self, frame: &mut Frame, rect: Rect);
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
 }
