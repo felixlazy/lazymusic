@@ -62,26 +62,27 @@ impl VolumeTui {
     /// 音量状态图标（静音 / 小音量 / 大音量）
     const VOLUME_STATUS: [&str; 3] = [" ", " ", " "];
 
+    const MAX_VOLUME: u8 = 100;
+
     /// 根据音量值从数组中选取对应图标
     fn pick_icon<'a>(volume: u8, icons: &'a [&'a str]) -> &'a str {
         let len = icons.len();
-        if volume == 0 {
-            return icons[0];
-        }
         // 根据音量百分比计算索引
-        let idx = (volume as usize * (len - 1)).div_ceil(100).min(len - 1);
+        let idx = (volume as usize * (len - 1))
+            .div_ceil(Self::MAX_VOLUME as usize)
+            .min(len - 1);
         icons[idx]
     }
 
     /// 直接设置音量值
     pub(crate) fn set_volume(&mut self, volume: u8) {
-        self.volume = volume.min(100);
+        self.volume = volume.min(Self::MAX_VOLUME);
     }
 
     /// 调整音量，可正可负
     pub(crate) fn adjust_volume(&mut self, delta: i8) {
         let new = self.volume as i16 + delta as i16;
-        self.volume = new.clamp(0, 100) as u8;
+        self.volume = new.clamp(0, Self::MAX_VOLUME as i16) as u8;
     }
 
     /// 获取当前音量值
