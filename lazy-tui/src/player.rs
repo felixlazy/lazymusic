@@ -5,6 +5,8 @@ mod playback;
 mod track;
 mod volume;
 
+use std::borrow::Cow;
+
 // 从 lazy_core 中导入结构体
 use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
 // 导入宏
@@ -121,10 +123,9 @@ impl PlayerTui {
     /// # Arguments
     ///
     /// * `track` - 曲目名称。
-    pub fn set_track(&mut self, track: String) {
+    pub fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
         if let Some(track_tui) = self.get_widget_mut::<TrackTui>() {
             track_tui.set_track(track);
         }
     }
 }
-

@@ -1,5 +1,7 @@
 //! 根 TUI 组件模块，定义了整个 TUI 的根容器。
 
+use std::borrow::Cow;
+
 // 导入宏
 use lazy_macro::DeriveHasTuiStyle;
 // 从 ratatui 中导入所需的组件和布局
@@ -72,7 +74,7 @@ impl RootTui {
     /// # Arguments
     ///
     /// * `track` - 曲目名称。
-    pub fn set_track(&mut self, track: String) {
+    pub fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
         if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.set_track(track);
         }
@@ -116,4 +118,3 @@ impl RenderTui for RootTui {
         self
     }
 }
-

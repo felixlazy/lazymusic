@@ -4,6 +4,7 @@
 use lazy_core::{structs::TuiStyle, traits::HasTuiStyle};
 // 导入宏，用于自动派生 trait
 use lazy_macro::DeriveHasTuiStyle;
+use std::borrow::Cow;
 // 从 ratatui 中导入所需的组件和布局
 use ratatui::{
     Frame,
@@ -73,14 +74,13 @@ impl TrackTui {
 
     /// 设置曲目名称。
     ///
-    /// 使用泛型 `T` 和 `Into<String>` trait bound，
-    /// 使得可以接受任何可以转换为 `String` 的类型作为参数，
+    /// 使用 `impl Into<Cow<'a, str>>` 来接受任何可以转换为 `Cow` 的类型，
     /// 例如 `&str` 或 `String`。
-    pub(crate) fn set_track<T>(&mut self, track: T)
-    where
-        T: Into<String>,
-    {
-        self.track = track.into();
+    /// 这种方法可以避免在 track 未更改时不必要的内存分配。
+    pub(crate) fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
+        let track = track.into();
+        if self.track != track {
+            self.track = track.into_owned();
+        }
     }
 }
-
