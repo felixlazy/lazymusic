@@ -165,4 +165,14 @@ impl PlayerTui {
             artist_tui.set_artist(artist);
         }
     }
+
+    /// 切换播放模式。
+    ///
+    /// 此方法会找到 `PlaybackModeTui` 子组件，并调用其 `toggle_mode` 方法
+    /// 来切换到下一个播放模式。
+    pub fn toggle_mode(&mut self) {
+        if let Some(playback_mode_tui) = self.get_widget_mut::<PlaybackModeTui>() {
+            playback_mode_tui.toggle_mode();
+        }
+    }
 }

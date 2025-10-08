@@ -98,6 +98,13 @@ impl RootTui {
             player.toggle_border();
         }
     }
+
+    /// 切换播放模式。
+    pub fn toggle_mode(&mut self) {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
+            player.toggle_mode();
+        }
+    }
 }
 
 impl RenderTui for RootTui {

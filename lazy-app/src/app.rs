@@ -5,7 +5,7 @@ use std::error::Error;
 // 从 lazy_tui 中导入根 TUI 组件和 RenderTui trait
 use lazy_tui::{root::RootTui, traits::RenderTui};
 // 从 tokio 中导入时间相关的组件
-use tokio::time::{interval, Duration, Interval, MissedTickBehavior};
+use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
 
 // 从当前 crate 的 event 模块中导入事件处理器和按键状态
 use crate::event::{EventHandler, KeyStatus};
@@ -117,7 +117,7 @@ impl App {
             KeyStatus::ProgressDecrease => (),                // h → 快退
             KeyStatus::PickerNext => (),                      // j → 选择下一个
             KeyStatus::PickerPrev => (),                      // k → 选择上一个
-            KeyStatus::SwitchMode => (),                      // m → 切换模式
+            KeyStatus::SwitchMode => self.tui.toggle_mode(),  // m → 切换模式
             KeyStatus::NextTrack => (),                       // ] → 下一首
             KeyStatus::PrevTrack => (),                       // [ → 上一首
             KeyStatus::PlaySelected => (),                    // Enter → 播放选中
@@ -125,3 +125,4 @@ impl App {
         }
     }
 }
+
