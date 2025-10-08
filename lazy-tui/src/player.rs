@@ -3,6 +3,8 @@
 // 导入子模块
 mod artist;
 mod playback;
+mod playback_mode;
+mod playback_progress;
 mod track;
 mod volume;
 
@@ -19,7 +21,10 @@ use ratatui::{
 };
 
 // 从当前 crate 的子模块中导入 TUI 组件
-use crate::player::{artist::ArtistTui, playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
+use crate::player::{
+    artist::ArtistTui, playback::PlaybackTui, playback_mode::PlaybackModeTui,
+    playback_progress::PlaybackProgressTui, track::TrackTui, volume::VolumeTui,
+};
 // 从当前 crate 中导入 traits
 use crate::traits::{HasWidgets, RenderTui, TuiBlock};
 
@@ -41,12 +46,15 @@ impl Default for PlayerTui {
             title: Default::default(),
             border: Default::default(),
             style: Default::default(),
-            // 初始化时，将所有子组件添加到 `widgets` 向量中
             widgets: vec![
+                // 第一行
                 Box::new(PlaybackTui::default()),
                 Box::new(TrackTui::default()),
-                Box::new(ArtistTui::default()),
                 Box::new(VolumeTui::default()),
+                // 第二行
+                Box::new(PlaybackProgressTui::default()),
+                Box::new(ArtistTui::default()),
+                Box::new(PlaybackModeTui::default()),
             ],
         }
     }
@@ -66,22 +74,37 @@ impl RenderTui for PlayerTui {
         // 获取去掉边框后的内部区域
         let inner = self.get_inner(rect);
 
-        // 使用水平布局将 `inner` 分成 4 个区域
-        // 注意：这里的布局和 `widgets` 向量中的组件顺序是对应的
-        let chunks = Layout::horizontal([
-            Constraint::Percentage(20), // 对应 `PlaybackTui`
-            Constraint::Percentage(40), // 对应 `TrackTui`
-            Constraint::Percentage(20), // 对应 `ArtistTui`
-            Constraint::Percentage(20), // 对应 `VolumeTui`
-        ])
-        .split(inner); // 将 `inner` 分割成子区域
+        // 创建一个两行的垂直布局
+        let rows =
+            Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)]).split(inner);
 
-        // 遍历并渲染各个子组件
-        for (i, widget) in self.widgets.iter().enumerate() {
-            if let Some(chunk) = chunks.get(i) {
-                widget.render(frame, *chunk);
-            }
-        }
+        // 为第一行创建一个三列的水平布局
+        // | PlaybackTui | TrackTui | VolumeTui |
+        let row1_chunks = Layout::horizontal([
+            Constraint::Percentage(30), // 播放状态
+            Constraint::Percentage(40), // 歌名
+            Constraint::Percentage(30), // 音量
+        ])
+        .split(rows[0]);
+
+        // 为第二行创建一个三列的水平布局
+        // | PlaybackProgressTui | ArtistTui | PlaybackModeTui |
+        let row2_chunks = Layout::horizontal([
+            Constraint::Percentage(30), // 播放进度
+            Constraint::Percentage(40), // 歌手
+            Constraint::Percentage(30), // 播放模式
+        ])
+        .split(rows[1]);
+
+        let areas_iter = row1_chunks.iter().chain(row2_chunks.iter());
+
+        // 遍历 widgets 和渲染区域迭代器，并进行渲染
+        self.widgets
+            .iter()
+            .zip(areas_iter)
+            .for_each(|(widget, &area)| {
+                widget.render(frame, area);
+            });
     }
 
     /// 将 `self` 转换为 `&dyn Any`。
