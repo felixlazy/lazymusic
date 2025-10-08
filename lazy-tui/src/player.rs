@@ -1,6 +1,7 @@
 //! 播放器模块，包含播放器 TUI 的主要组件。
 
 // 导入子模块
+mod artist;
 mod playback;
 mod track;
 mod volume;
@@ -18,7 +19,7 @@ use ratatui::{
 };
 
 // 从当前 crate 的子模块中导入 TUI 组件
-use crate::player::{playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
+use crate::player::{artist::ArtistTui, playback::PlaybackTui, track::TrackTui, volume::VolumeTui};
 // 从当前 crate 中导入 traits
 use crate::traits::{HasWidgets, RenderTui, TuiBlock};
 
@@ -44,6 +45,7 @@ impl Default for PlayerTui {
             widgets: vec![
                 Box::new(PlaybackTui::default()),
                 Box::new(TrackTui::default()),
+                Box::new(ArtistTui::default()),
                 Box::new(VolumeTui::default()),
             ],
         }
@@ -64,11 +66,12 @@ impl RenderTui for PlayerTui {
         // 获取去掉边框后的内部区域
         let inner = self.get_inner(rect);
 
-        // 使用水平布局将 `inner` 分成 3 个区域
+        // 使用水平布局将 `inner` 分成 4 个区域
         // 注意：这里的布局和 `widgets` 向量中的组件顺序是对应的
         let chunks = Layout::horizontal([
             Constraint::Percentage(20), // 对应 `PlaybackTui`
-            Constraint::Percentage(60), // 对应 `TrackTui`
+            Constraint::Percentage(40), // 对应 `TrackTui`
+            Constraint::Percentage(20), // 对应 `ArtistTui`
             Constraint::Percentage(20), // 对应 `VolumeTui`
         ])
         .split(inner); // 将 `inner` 分割成子区域
@@ -126,6 +129,17 @@ impl PlayerTui {
     pub fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
         if let Some(track_tui) = self.get_widget_mut::<TrackTui>() {
             track_tui.set_track(track);
+        }
+    }
+
+    /// 设置当前播放的歌手。
+    ///
+    /// # Arguments
+    ///
+    /// * `artist` - 歌手名称。
+    pub fn set_artist<'a>(&mut self, artist: impl Into<Cow<'a, str>>) {
+        if let Some(artist_tui) = self.get_widget_mut::<ArtistTui>() {
+            artist_tui.set_artist(artist);
         }
     }
 }

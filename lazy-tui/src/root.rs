@@ -80,6 +80,17 @@ impl RootTui {
         }
     }
 
+    /// 设置当前播放歌手，此方法将调用 `PlayerTui` 的 `set_artist` 方法。
+    ///
+    /// # Arguments
+    ///
+    /// * `artist` - 歌手名称。
+    pub fn set_artist<'a>(&mut self, artist: impl Into<Cow<'a, str>>) {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
+            player.set_artist(artist);
+        }
+    }
+
     /// 切换当前组件及其子组件的边框显示状态。
     pub fn toggle_all_border(&mut self) {
         self.toggle_border();
