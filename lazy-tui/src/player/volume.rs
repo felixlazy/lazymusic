@@ -31,7 +31,7 @@ impl RenderTui for VolumeTui {
         let status_icon = Self::pick_icon(self.volume, &Self::VOLUME_STATUS);
         let bar_icon = Self::pick_icon(self.volume, &Self::ICONS_BLOCK);
 
-        let volume_status = format!("{} {} {:<3}% ", status_icon, bar_icon, self.volume);
+        let volume_status = format!("{} {}     {:<3}% ", status_icon, bar_icon, self.volume);
 
         let volume = Paragraph::new(volume_status)
             .style(self.tui_style())

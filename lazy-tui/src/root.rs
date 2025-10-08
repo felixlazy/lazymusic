@@ -1,11 +1,14 @@
 //! 根 TUI 组件模块，定义了整个 TUI 的根容器。
 
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Duration};
 
 // 导入宏
 use lazy_macro::DeriveHasTuiStyle;
 // 从 ratatui 中导入所需的组件和布局
-use ratatui::{Frame, layout::Rect};
+use ratatui::{
+    Frame,
+    layout::{Constraint, Layout, Rect},
+};
 
 // 从 lazy_core 中导入所需的结构体和 traits
 use lazy_core::{
@@ -105,6 +108,28 @@ impl RootTui {
             player.toggle_mode();
         }
     }
+
+    /// 设置播放进度。
+    ///
+    /// # Arguments
+    ///
+    /// * `progress` - 当前的播放进度。
+    pub fn set_progress(&mut self, progress: Duration) {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
+            player.set_progress(progress);
+        }
+    }
+
+    /// 设置总时长。
+    ///
+    /// # Arguments
+    ///
+    /// * `duration` - 曲目的总时长。
+    pub fn set_duration(&mut self, duration: Duration) {
+        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
+            player.set_duration(duration);
+        }
+    }
 }
 
 impl RenderTui for RootTui {
@@ -120,9 +145,15 @@ impl RenderTui for RootTui {
         // 渲染根组件边框和标题
         frame.render_widget(self.to_block(), rect);
 
+        let chunks = Layout::vertical([
+            Constraint::Fill(1),
+            Constraint::Fill(6),
+            Constraint::Fill(1),
+        ])
+        .split(inner);
         // 遍历并渲染所有子组件
-        self.widgets.iter().for_each(|f| {
-            f.render(frame, inner);
+        self.widgets.iter().enumerate().for_each(|(i, f)| {
+            f.render(frame, chunks[i]);
         });
     }
 

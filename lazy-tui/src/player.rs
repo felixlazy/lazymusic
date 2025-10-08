@@ -8,7 +8,7 @@ mod playback_progress;
 mod track;
 mod volume;
 
-use std::borrow::Cow;
+use std::{borrow::Cow, time::Duration};
 
 // 从 lazy_core 中导入结构体
 use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
@@ -70,8 +70,8 @@ impl RenderTui for PlayerTui {
     fn render(&self, frame: &mut Frame, rect: Rect) {
         // 渲染播放器边框和标题
         frame.render_widget(self.to_block(), rect);
-
         // 获取去掉边框后的内部区域
+
         let inner = self.get_inner(rect);
 
         // 创建一个两行的垂直布局
@@ -81,18 +81,18 @@ impl RenderTui for PlayerTui {
         // 为第一行创建一个三列的水平布局
         // | PlaybackTui | TrackTui | VolumeTui |
         let row1_chunks = Layout::horizontal([
-            Constraint::Percentage(30), // 播放状态
-            Constraint::Percentage(40), // 歌名
-            Constraint::Percentage(30), // 音量
+            Constraint::Percentage(20), // 播放状态
+            Constraint::Percentage(60), // 歌名
+            Constraint::Percentage(20), // 音量
         ])
         .split(rows[0]);
 
         // 为第二行创建一个三列的水平布局
         // | PlaybackProgressTui | ArtistTui | PlaybackModeTui |
         let row2_chunks = Layout::horizontal([
-            Constraint::Percentage(30), // 播放进度
-            Constraint::Percentage(40), // 歌手
-            Constraint::Percentage(30), // 播放模式
+            Constraint::Percentage(20), // 播放进度
+            Constraint::Percentage(60), // 歌手
+            Constraint::Percentage(20), // 播放模式
         ])
         .split(rows[1]);
 
@@ -173,6 +173,28 @@ impl PlayerTui {
     pub fn toggle_mode(&mut self) {
         if let Some(playback_mode_tui) = self.get_widget_mut::<PlaybackModeTui>() {
             playback_mode_tui.toggle_mode();
+        }
+    }
+
+    /// 设置播放进度。
+    ///
+    /// # Arguments
+    ///
+    /// * `progress` - 当前的播放进度。
+    pub fn set_progress(&mut self, progress: Duration) {
+        if let Some(playback_progress_tui) = self.get_widget_mut::<PlaybackProgressTui>() {
+            playback_progress_tui.set_progress(progress);
+        }
+    }
+
+    /// 设置总时长。
+    ///
+    /// # Arguments
+    ///
+    /// * `duration` - 曲目的总时长。
+    pub fn set_duration(&mut self, duration: Duration) {
+        if let Some(playback_progress_tui) = self.get_widget_mut::<PlaybackProgressTui>() {
+            playback_progress_tui.set_duration(duration);
         }
     }
 }
