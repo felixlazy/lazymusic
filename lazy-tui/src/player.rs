@@ -8,8 +8,6 @@ mod playback_progress;
 mod track;
 mod volume;
 
-use std::{borrow::Cow, time::Duration};
-
 // 从 lazy_core 中导入结构体
 use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
 // 导入宏
@@ -21,9 +19,14 @@ use ratatui::{
 };
 
 // 从当前 crate 的子模块中导入 TUI 组件
-use crate::player::{
-    artist::ArtistTui, playback::PlaybackTui, playback_mode::PlaybackModeTui,
-    playback_progress::PlaybackProgressTui, track::TrackTui, volume::VolumeTui,
+use crate::{
+    delegate_to_widget,
+    player::{
+        artist::ArtistTui, playback::PlaybackTui, playback_mode::PlaybackModeTui,
+        playback_progress::PlaybackProgressTui, track::TrackTui, volume::VolumeTui,
+    },
+    traits::TuiEnentHandle,
+    types::TuiEnent,
 };
 // 从当前 crate 中导入 traits
 use crate::traits::{HasWidgets, RenderTui, TuiBlock};
@@ -129,76 +132,38 @@ impl HasWidgets for PlayerTui {
     }
 }
 
-impl PlayerTui {
-    /// 调整音量。
+impl TuiEnentHandle for PlayerTui {
+    /// 处理 TUI 事件，并将其分发给对应的子组件。
     ///
-    /// # Arguments
-    ///
-    /// * `delta` - 音量变化的增量（正数表示增加，负数表示减少）。
-    pub fn adjust_volume(&mut self, delta: i8) {
-        if let Some(volume_tui) = self.get_widget_mut::<VolumeTui>() {
-            volume_tui.adjust_volume(delta);
-        }
-    }
-
-    /// 切换播放状态（播放/暂停）。
-    pub fn toggle_state(&mut self) {
-        if let Some(playback_tui) = self.get_widget_mut::<PlaybackTui>() {
-            playback_tui.toggle_state();
-        }
-    }
-
-    /// 设置当前播放的曲目。
-    ///
-    /// # Arguments
-    ///
-    /// * `track` - 曲目名称。
-    pub fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
-        if let Some(track_tui) = self.get_widget_mut::<TrackTui>() {
-            track_tui.set_track(track);
-        }
-    }
-
-    /// 设置当前播放的歌手。
-    ///
-    /// # Arguments
-    ///
-    /// * `artist` - 歌手名称。
-    pub fn set_artist<'a>(&mut self, artist: impl Into<Cow<'a, str>>) {
-        if let Some(artist_tui) = self.get_widget_mut::<ArtistTui>() {
-            artist_tui.set_artist(artist);
-        }
-    }
-
-    /// 切换播放模式。
-    ///
-    /// 此方法会找到 `PlaybackModeTui` 子组件，并调用其 `toggle_mode` 方法
-    /// 来切换到下一个播放模式。
-    pub fn toggle_mode(&mut self) {
-        if let Some(playback_mode_tui) = self.get_widget_mut::<PlaybackModeTui>() {
-            playback_mode_tui.toggle_mode();
-        }
-    }
-
-    /// 设置播放进度。
-    ///
-    /// # Arguments
-    ///
-    /// * `progress` - 当前的播放进度。
-    pub fn set_progress(&mut self, progress: Duration) {
-        if let Some(playback_progress_tui) = self.get_widget_mut::<PlaybackProgressTui>() {
-            playback_progress_tui.set_progress(progress);
-        }
-    }
-
-    /// 设置总时长。
-    ///
-    /// # Arguments
-    ///
-    /// * `duration` - 曲目的总时长。
-    pub fn set_duration(&mut self, duration: Duration) {
-        if let Some(playback_progress_tui) = self.get_widget_mut::<PlaybackProgressTui>() {
-            playback_progress_tui.set_duration(duration);
+    /// 此方法作为事件处理的中央分发器。它使用 `delegate_to_widget!` 宏
+    /// 来匹配不同的事件，并将它们高效地路由到正确的子组件进行处理。
+    fn enent_handle(&mut self, event: TuiEnent) {
+        match event {
+            // 当接收到 `Playback` 事件时...
+            TuiEnent::Playback => {
+                // ...将处理逻辑委托给 `PlaybackTui` 子组件。
+                // 闭包 `|w: &mut PlaybackTui| w.toggle_state()` 会在找到组件后执行。
+                delegate_to_widget!(self, PlaybackTui, |w: &mut PlaybackTui| w.toggle_state());
+            }
+            TuiEnent::Volumei(delta) => {
+                delegate_to_widget!(self, VolumeTui, |w: &mut VolumeTui| w.adjust_volume(delta));
+            }
+            TuiEnent::PlaybackProgress(duration, progress) => {
+                delegate_to_widget!(self, PlaybackProgressTui, |w: &mut PlaybackProgressTui| {
+                    w.set_progress(progress);
+                    w.set_duration(duration);
+                });
+            }
+            TuiEnent::PlaybackMode => {
+                delegate_to_widget!(self, PlaybackModeTui, |w: &mut PlaybackModeTui| w
+                    .toggle_mode());
+            }
+            TuiEnent::Artist(artist) => {
+                delegate_to_widget!(self, ArtistTui, |w: &mut ArtistTui| w.set_artist(artist));
+            }
+            TuiEnent::Track(track) => {
+                delegate_to_widget!(self, TrackTui, |w: &mut TrackTui| w.set_track(track));
+            }
         }
     }
 }

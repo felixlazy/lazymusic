@@ -4,6 +4,8 @@ use lazy_core::traits::{HasBorderStyle, HasTitleStyle, HasTuiStyle};
 use ratatui::{Frame, layout::Rect, widgets::Block};
 use std::any::Any;
 
+use crate::types::TuiEnent;
+
 /// 可渲染为 `ratatui` `Block` 的组件的 trait。
 pub trait TuiBlock: HasTitleStyle + HasBorderStyle + HasTuiStyle {
     /// 从组件的属性创建 `Block`。
@@ -61,4 +63,8 @@ pub trait HasWidgets {
             .iter()
             .find_map(|widget| widget.as_any().downcast_ref::<T>())
     }
+}
+
+pub trait TuiEnentHandle {
+    fn enent_handle(&mut self, event: TuiEnent);
 }

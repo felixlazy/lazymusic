@@ -1,7 +1,5 @@
 //! 根 TUI 组件模块，定义了整个 TUI 的根容器。
 
-use std::{borrow::Cow, time::Duration};
-
 // 导入宏
 use lazy_macro::DeriveHasTuiStyle;
 // 从 ratatui 中导入所需的组件和布局
@@ -18,14 +16,16 @@ use lazy_core::{
 
 // 从当前 crate 中导入所需的组件和 traits
 use crate::{
+    delegate_to_widget,
     player::PlayerTui,
     progress::ProgressTui,
-    traits::{HasWidgets, RenderTui, TuiBlock}, // RenderTui 用于渲染，TuiBlock 用于生成边框块
+    traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
+    types::TuiEnent, // RenderTui 用于渲染，TuiBlock 用于生成边框块
 };
 
 /// `RootTui` 是根 TUI 组件，作为整个播放器界面的容器。
 ///
-/// 它包含了 `PlayerTui`，并负责渲染整个界面。
+/// 它包含了 `PlayerTui` 和 `ProgressTui`，并负责渲染整个界面。
 #[derive(DeriveHasTuiStyle)]
 pub struct RootTui {
     title: TitleStyle,                // 根组件标题样式
@@ -41,7 +41,7 @@ impl Default for RootTui {
             title: Default::default(),
             border: Default::default(),
             style: Default::default(),
-            // 初始化时，将 `PlayerTui` 作为子组件
+            // 初始化时，将 `PlayerTui` 和 `ProgressTui` 作为子组件
             widgets: vec![
                 Box::new(PlayerTui::default()),
                 Box::new(ProgressTui::default()),
@@ -56,56 +56,18 @@ impl HasWidgets for RootTui {
         &mut self.widgets
     }
 
+    /// 获取对 `widgets` 向量的不可变引用。
     fn get_widgets(&self) -> &Vec<Box<dyn RenderTui>> {
         &self.widgets
     }
 }
 
 impl RootTui {
-    /// 调整音量，此方法将调用 `PlayerTui` 的 `adjust_volume` 方法。
-    ///
-    /// # Arguments
-    ///
-    /// * `delta` - 音量变化的增量。
-    pub fn adjust_volume(&mut self, delta: i8) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.adjust_volume(delta);
-        }
-    }
-
-    /// 切换播放状态（播放/暂停），此方法将调用 `PlayerTui` 的 `toggle_state` 方法。
-    pub fn toggle_state(&mut self) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.toggle_state();
-        }
-    }
-
-    /// 设置当前播放曲目，此方法将调用 `PlayerTui` 的 `set_track` 方法。
-    ///
-    /// # Arguments
-    ///
-    /// * `track` - 曲目名称。
-    pub fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.set_track(track);
-        }
-    }
-
-    /// 设置当前播放歌手，此方法将调用 `PlayerTui` 的 `set_artist` 方法。
-    ///
-    /// # Arguments
-    ///
-    /// * `artist` - 歌手名称。
-    pub fn set_artist<'a>(&mut self, artist: impl Into<Cow<'a, str>>) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.set_artist(artist);
-        }
-    }
-
     /// 切换当前组件及其子组件的边框显示状态。
     pub fn toggle_all_border(&mut self) {
         self.toggle_border();
 
+        // 宏，用于切换指定类型子组件的边框
         macro_rules! toggle_widget_border {
             ($widget_type:ty) => {
                 if let Some(widget) = self.get_widget_mut::<$widget_type>() {
@@ -114,9 +76,16 @@ impl RootTui {
             };
         }
 
+        // 切换 PlayerTui 和 ProgressTui 的边框
         toggle_widget_border!(PlayerTui);
         toggle_widget_border!(ProgressTui);
     }
+
+    /// 检查指定类型的子组件是否具有边框。
+    ///
+    /// # 类型参数
+    ///
+    /// * `T`: 需要检查的子组件类型，必须实现 `TuiBlock` trait。
     fn has_widgets_border<T>(&self) -> bool
     where
         T: TuiBlock + 'static,
@@ -128,35 +97,11 @@ impl RootTui {
         }
     }
 
-    /// 切换播放模式。
-    pub fn toggle_mode(&mut self) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.toggle_mode();
-        }
-    }
-
-    /// 设置播放进度。
+    /// 更新进度条组件的进度。
     ///
     /// # Arguments
     ///
-    /// * `progress` - 当前的播放进度。
-    pub fn set_playback_progress(&mut self, progress: Duration) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.set_progress(progress);
-        }
-    }
-
-    /// 设置总时长。
-    ///
-    /// # Arguments
-    ///
-    /// * `duration` - 曲目的总时长。
-    pub fn set_duration(&mut self, duration: Duration) {
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.set_duration(duration);
-        }
-    }
-
+    /// * `progress`: 进度值，范围从 0.0 到 1.0。
     pub fn update_progress(&mut self, progress: f64) {
         if let Some(player) = self.get_widget_mut::<ProgressTui>() {
             player.set_ratio(progress);
@@ -177,25 +122,52 @@ impl RenderTui for RootTui {
         // 渲染根组件边框和标题
         frame.render_widget(self.to_block(), rect);
 
+        // 定义垂直布局
         let chunks = Layout::vertical([
-            Constraint::Min(4),
-            Constraint::Fill(20),
+            Constraint::Min(4),   // 播放器最小高度
+            Constraint::Fill(20), // 填充剩余空间
+            // 进度条高度，根据是否有边框动态调整
             Constraint::Max(1 + 2 * u16::from(self.has_widgets_border::<ProgressTui>())),
         ])
         .split(inner);
+
         // 遍历并渲染所有子组件
         self.widgets.iter().enumerate().for_each(|(i, f)| {
             f.render(frame, chunks[i]);
         });
     }
 
-    /// 将 `self` 转换为 `&dyn Any`。
+    /// 将 `self` 转换为 `&dyn Any`，用于类型转换。
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 
-    /// 将 `self` 转换为 `&mut dyn Any`。
+    /// 将 `self` 转换为 `&mut dyn Any`，用于可变类型转换。
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
+    }
+}
+
+impl TuiEnentHandle for RootTui {
+    /// 处理 TUI 事件。
+    ///
+    /// 根据事件类型，将事件委托给相应的子组件处理。
+    ///
+    /// # Arguments
+    ///
+    /// * `event`: TUI 事件。
+    fn enent_handle(&mut self, event: TuiEnent) {
+        match event {
+            // 匹配与播放器相关的事件
+            TuiEnent::Playback
+            | TuiEnent::Volumei(_)
+            | TuiEnent::PlaybackProgress(_, _)
+            | TuiEnent::PlaybackMode
+            | TuiEnent::Artist(_)
+            | TuiEnent::Track(_) => {
+                // 将事件委托给 PlayerTui 组件处理
+                delegate_to_widget!(self, PlayerTui, |w: &mut PlayerTui| w.enent_handle(event));
+            }
+        }
     }
 }
