@@ -41,7 +41,10 @@ impl Default for RootTui {
             border: Default::default(),
             style: Default::default(),
             // 初始化时，将 `PlayerTui` 作为子组件
-            widgets: vec![Box::new(PlayerTui::default())],
+            widgets: vec![
+                Box::new(PlayerTui::default()),
+                Box::new(ProgressTui::default()),
+            ],
         }
     }
 }
@@ -114,7 +117,7 @@ impl RootTui {
     /// # Arguments
     ///
     /// * `progress` - 当前的播放进度。
-    pub fn set_progress(&mut self, progress: Duration) {
+    pub fn set_playback_progress(&mut self, progress: Duration) {
         if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.set_progress(progress);
         }
@@ -128,6 +131,12 @@ impl RootTui {
     pub fn set_duration(&mut self, duration: Duration) {
         if let Some(player) = self.get_widget_mut::<PlayerTui>() {
             player.set_duration(duration);
+        }
+    }
+
+    pub fn update_progress(&mut self, progress: f64) {
+        if let Some(player) = self.get_widget_mut::<ProgressTui>() {
+            player.set_ratio(progress);
         }
     }
 }
@@ -145,12 +154,9 @@ impl RenderTui for RootTui {
         // 渲染根组件边框和标题
         frame.render_widget(self.to_block(), rect);
 
-        let chunks = Layout::vertical([
-            Constraint::Fill(1),
-            Constraint::Fill(6),
-            Constraint::Fill(1),
-        ])
-        .split(inner);
+        let chunks =
+            Layout::vertical([Constraint::Min(4), Constraint::Fill(20), Constraint::Min(1)])
+                .split(inner);
         // 遍历并渲染所有子组件
         self.widgets.iter().enumerate().for_each(|(i, f)| {
             f.render(frame, chunks[i]);

@@ -81,18 +81,18 @@ impl RenderTui for PlayerTui {
         // 为第一行创建一个三列的水平布局
         // | PlaybackTui | TrackTui | VolumeTui |
         let row1_chunks = Layout::horizontal([
-            Constraint::Percentage(20), // 播放状态
-            Constraint::Percentage(60), // 歌名
-            Constraint::Percentage(20), // 音量
+            Constraint::Percentage(30), // 播放状态
+            Constraint::Min(40),        // 歌名
+            Constraint::Min(30),        // 音量
         ])
         .split(rows[0]);
 
         // 为第二行创建一个三列的水平布局
         // | PlaybackProgressTui | ArtistTui | PlaybackModeTui |
         let row2_chunks = Layout::horizontal([
-            Constraint::Percentage(20), // 播放进度
-            Constraint::Percentage(60), // 歌手
-            Constraint::Percentage(20), // 播放模式
+            Constraint::Percentage(30), // 播放进度
+            Constraint::Min(40),        // 歌手
+            Constraint::Min(30),        // 播放模式
         ])
         .split(rows[1]);
 

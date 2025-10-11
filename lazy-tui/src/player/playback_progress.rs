@@ -43,6 +43,7 @@ impl RenderTui for PlaybackProgressTui {
     fn render(&self, frame: &mut Frame, rect: Rect) {
         // 创建一个由多个样式片段（Span）组成的行（Line）
         let line = Line::from(vec![
+            Span::raw(" ").fg(self.style.fg()),
             // 第一个片段：当前进度
             Span::raw(Self::format_duration(self.progress)).fg(self.style.fg()),
             // 第二个片段：分隔符

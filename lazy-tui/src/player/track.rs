@@ -46,7 +46,7 @@ impl RenderTui for TrackTui {
     /// * `rect` - 要渲染的区域。
     fn render(&self, frame: &mut Frame, rect: Rect) {
         // 创建 Paragraph 小部件，用于显示曲目名称
-        let widget = Paragraph::new(self.track())
+        let widget = Paragraph::new(format!("󰝚 {}", self.track()))
             // 应用样式（颜色、粗体等）
             .style(self.tui_style())
             // 应用对齐方式
@@ -78,7 +78,7 @@ impl TrackTui {
     /// 例如 `&str` 或 `String`。
     /// 这种方法可以避免在 track 未更改时不必要的内存分配。
     pub(crate) fn set_track<'a>(&mut self, track: impl Into<Cow<'a, str>>) {
-        let track = track.into();
+        let track: Cow<str> = track.into();
         if self.track != track {
             self.track = track.into_owned();
         }
