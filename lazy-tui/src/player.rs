@@ -123,6 +123,10 @@ impl HasWidgets for PlayerTui {
     fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>> {
         &mut self.widgets
     }
+
+    fn get_widgets(&self) -> &Vec<Box<dyn RenderTui>> {
+        &self.widgets
+    }
 }
 
 impl PlayerTui {

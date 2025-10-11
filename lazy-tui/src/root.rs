@@ -19,6 +19,7 @@ use lazy_core::{
 // 从当前 crate 中导入所需的组件和 traits
 use crate::{
     player::PlayerTui,
+    progress::ProgressTui,
     traits::{HasWidgets, RenderTui, TuiBlock}, // RenderTui 用于渲染，TuiBlock 用于生成边框块
 };
 
@@ -53,6 +54,10 @@ impl HasWidgets for RootTui {
     /// 获取对 `widgets` 向量的可变引用。
     fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>> {
         &mut self.widgets
+    }
+
+    fn get_widgets(&self) -> &Vec<Box<dyn RenderTui>> {
+        &self.widgets
     }
 }
 
@@ -100,8 +105,26 @@ impl RootTui {
     /// 切换当前组件及其子组件的边框显示状态。
     pub fn toggle_all_border(&mut self) {
         self.toggle_border();
-        if let Some(player) = self.get_widget_mut::<PlayerTui>() {
-            player.toggle_border();
+
+        macro_rules! toggle_widget_border {
+            ($widget_type:ty) => {
+                if let Some(widget) = self.get_widget_mut::<$widget_type>() {
+                    widget.toggle_border();
+                }
+            };
+        }
+
+        toggle_widget_border!(PlayerTui);
+        toggle_widget_border!(ProgressTui);
+    }
+    fn has_widgets_border<T>(&self) -> bool
+    where
+        T: TuiBlock + 'static,
+    {
+        if let Some(widget) = self.get_widget::<T>() {
+            widget.has_border()
+        } else {
+            false
         }
     }
 
@@ -154,9 +177,12 @@ impl RenderTui for RootTui {
         // 渲染根组件边框和标题
         frame.render_widget(self.to_block(), rect);
 
-        let chunks =
-            Layout::vertical([Constraint::Min(4), Constraint::Fill(20), Constraint::Min(1)])
-                .split(inner);
+        let chunks = Layout::vertical([
+            Constraint::Min(4),
+            Constraint::Fill(20),
+            Constraint::Max(1 + 2 * u16::from(self.has_widgets_border::<ProgressTui>())),
+        ])
+        .split(inner);
         // 遍历并渲染所有子组件
         self.widgets.iter().enumerate().for_each(|(i, f)| {
             f.render(frame, chunks[i]);

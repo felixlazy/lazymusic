@@ -3,15 +3,18 @@
 //! `ProgressTui` 结构体负责渲染一个带有圆角的进度条。
 //! 它使用 `ratatui` 库中的 `Gauge` 小部件来显示进度。
 
-use lazy_core::{structs::TuiStyle, traits::HasTuiStyle};
+use lazy_core::{
+    structs::{BorderStyle, TitleStyle, TuiStyle},
+    traits::HasTuiStyle,
+};
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{
-    layout::{Alignment, Constraint, Layout},
+    layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Stylize},
-    widgets::{Gauge, Paragraph},
+    widgets::{Block, Gauge, Paragraph},
 };
 
-use crate::traits::RenderTui;
+use crate::traits::{RenderTui, TuiBlock};
 
 /// 一个用于显示进度条的 TUI 组件。
 ///
@@ -19,7 +22,9 @@ use crate::traits::RenderTui;
 /// 和两个用于圆角的 `Paragraph` 小部件组成。
 #[derive(DeriveHasTuiStyle)]
 pub struct ProgressTui {
-    style: TuiStyle,
+    title: TitleStyle,   // 标题样式
+    border: BorderStyle, // 边框样式
+    style: TuiStyle,     // 通用样式（颜色、对齐等）
     ratio: f64,
 }
 
@@ -29,7 +34,12 @@ impl Default for ProgressTui {
     fn default() -> Self {
         let mut style = TuiStyle::default();
         style.set_bg(Color::Rgb(47, 51, 77));
-        Self { style, ratio: 0.0 }
+        Self {
+            title: Default::default(),
+            style,
+            border: Default::default(),
+            ratio: 0.0,
+        }
     }
 }
 
@@ -38,7 +48,12 @@ impl RenderTui for ProgressTui {
     ///
     /// 进度条在给定的 `rect` 内渲染。
     /// 它由三部分组成：一个左半圆、进度计量器和一个右半圆。
-    fn render(&self, frame: &mut ratatui::Frame, rect: ratatui::prelude::Rect) {
+    fn render(&self, frame: &mut ratatui::Frame, rect: Rect) {
+        // 获取去掉边框的内部区域
+        let inner = self.get_inner(rect);
+        // 渲染根组件边框和标题
+        frame.render_widget(self.to_block().bg(self.border.bg()), rect);
+
         let left_haft_circle = Paragraph::new("").alignment(Alignment::Right);
         let bars = Gauge::default()
             .gauge_style(self.tui_style())
@@ -52,7 +67,7 @@ impl RenderTui for ProgressTui {
             Constraint::Percentage(98),
             Constraint::Min(2),
         ])
-        .split(rect);
+        .split(inner);
 
         frame.render_widget(left_haft_circle, row[0]);
         frame.render_widget(bars, row[1]);
@@ -87,4 +102,3 @@ impl ProgressTui {
         self.ratio = 0.0;
     }
 }
-

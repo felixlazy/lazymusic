@@ -46,11 +46,19 @@ pub trait HasWidgets {
     /// 返回对小部件向量的可变引用。
     fn get_widgets_mut(&mut self) -> &mut Vec<Box<dyn RenderTui>>;
 
+    /// 返回对小部件向量的可变引用。
+    fn get_widgets(&self) -> &Vec<Box<dyn RenderTui>>;
+
     /// 返回对 `T` 类型特定小部件的可变引用。
     fn get_widget_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.get_widgets_mut()
             .iter_mut()
             .find_map(|widget| widget.as_any_mut().downcast_mut::<T>())
     }
-}
 
+    fn get_widget<T: 'static>(&self) -> Option<&T> {
+        self.get_widgets()
+            .iter()
+            .find_map(|widget| widget.as_any().downcast_ref::<T>())
+    }
+}
