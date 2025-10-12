@@ -21,4 +21,17 @@ pub enum TuiEnent<'a> {
     Artist(Cow<'a, str>),
     /// 更新曲目信息
     Track(Cow<'a, str>),
+    /// 导航栏切换
+    Navber(Direction),
+    /// 导航栏图标设置
+    NavberIcon(Cow<'a, str>, Cow<'a, str>),
+}
+
+/// 代表导航方向的枚举
+#[derive(Clone, Copy, Debug)]
+pub enum Direction {
+    /// 向左
+    Left,
+    /// 向右
+    Right,
 }

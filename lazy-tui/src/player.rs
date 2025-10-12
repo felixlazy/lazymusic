@@ -164,6 +164,7 @@ impl TuiEnentHandle for PlayerTui {
             TuiEnent::Track(track) => {
                 delegate_to_widget!(self, TrackTui, |w: &mut TrackTui| w.set_track(track));
             }
+            _ => (),
         }
     }
 }

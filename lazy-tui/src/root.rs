@@ -17,6 +17,7 @@ use lazy_core::{
 // 从当前 crate 中导入所需的组件和 traits
 use crate::{
     delegate_to_widget,
+    navbar::NavbarTui,
     player::PlayerTui,
     progress::ProgressTui,
     traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
@@ -44,6 +45,7 @@ impl Default for RootTui {
             // 初始化时，将 `PlayerTui` 和 `ProgressTui` 作为子组件
             widgets: vec![
                 Box::new(PlayerTui::default()),
+                Box::new(NavbarTui::default()),
                 Box::new(ProgressTui::default()),
             ],
         }
@@ -124,7 +126,8 @@ impl RenderTui for RootTui {
 
         // 定义垂直布局
         let chunks = Layout::vertical([
-            Constraint::Min(4),   // 播放器最小高度
+            Constraint::Min(4), // 播放器最小高度
+            Constraint::Min(3),
             Constraint::Fill(20), // 填充剩余空间
             // 进度条高度，根据是否有边框动态调整
             Constraint::Max(1 + 2 * u16::from(self.has_widgets_border::<ProgressTui>())),
@@ -167,6 +170,10 @@ impl TuiEnentHandle for RootTui {
             | TuiEnent::Track(_) => {
                 // 将事件委托给 PlayerTui 组件处理
                 delegate_to_widget!(self, PlayerTui, |w: &mut PlayerTui| w.enent_handle(event));
+            }
+            TuiEnent::Navber(_) | TuiEnent::NavberIcon(_, _) => {
+                // 将事件委托给 Navbar 组件处理
+                delegate_to_widget!(self, NavbarTui, |w: &mut NavbarTui| w.enent_handle(event));
             }
         }
     }

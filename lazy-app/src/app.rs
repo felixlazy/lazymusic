@@ -112,7 +112,7 @@ impl App {
     /// * `key_status` - 从事件处理器接收到的按键状态。
     fn event_handler(&mut self, key_status: KeyStatus) {
         use crate::event::KeyStatus::*;
-        use lazy_tui::types::TuiEnent::*;
+        use lazy_tui::types::{Direction, TuiEnent::*};
         match key_status {
             Quit => self.stop(),                                   // q → 退出程序
             TogglePlay => self.tui.enent_handle(Playback),         // p → 播放/暂停
@@ -126,7 +126,9 @@ impl App {
             NextTrack => (),                                       // ] → 下一首
             PrevTrack => (),                                       // [ → 上一首
             PlaySelected => (),                                    // Enter → 播放选中
-            NoOp => (),                                            // 无操作
+            NavberNext => self.tui.enent_handle(Navber(Direction::Right)),
+            NavberPrve => self.tui.enent_handle(Navber(Direction::Left)),
+            NoOp => (), // 无操作
         }
     }
 }
