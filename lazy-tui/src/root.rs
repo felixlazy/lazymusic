@@ -20,6 +20,7 @@ use crate::{
     navbar::NavbarTui,
     player::PlayerTui,
     progress::ProgressTui,
+    router_view::RouterViewTui,
     traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
     types::TuiEnent, // RenderTui 用于渲染，TuiBlock 用于生成边框块
 };
@@ -46,6 +47,7 @@ impl Default for RootTui {
             widgets: vec![
                 Box::new(PlayerTui::default()),
                 Box::new(NavbarTui::default()),
+                Box::new(RouterViewTui::default()),
                 Box::new(ProgressTui::default()),
             ],
         }
@@ -81,6 +83,8 @@ impl RootTui {
         // 切换 PlayerTui 和 ProgressTui 的边框
         toggle_widget_border!(PlayerTui);
         toggle_widget_border!(ProgressTui);
+        toggle_widget_border!(RouterViewTui);
+        toggle_widget_border!(NavbarTui);
     }
 
     /// 检查指定类型的子组件是否具有边框。
