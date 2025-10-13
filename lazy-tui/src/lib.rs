@@ -1,4 +1,3 @@
-pub mod macros;
 mod navbar;
 mod player;
 mod progress;

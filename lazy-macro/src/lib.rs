@@ -5,10 +5,15 @@
 //! - `#[derive(DeriveHasTuiStyle)]`: 为 UI 组件自动实现样式相关的 Trait。
 
 mod accessor;
+mod event_mappings;
 mod has_tui_style;
 mod utils;
-use crate::{accessor::expand_accessor, has_tui_style::expand_has_tui_style};
+use crate::{
+    accessor::expand_accessor, event_mappings::expand_event_mappings,
+    has_tui_style::expand_has_tui_style,
+};
 
+use proc_macro::token_stream;
 use syn::DeriveInput;
 
 /// 为结构体字段自动生成 getter 和/或 setter 方法。
@@ -91,6 +96,17 @@ pub fn derive_acessor(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 pub fn derive_has_tui_style(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = syn::parse_macro_input!(input as DeriveInput);
     match expand_has_tui_style(&ast) {
+        Ok(token_stream) => token_stream.into(),
+        Err(e) => e.into_compile_error().into(),
+    }
+}
+
+#[proc_macro_attribute]
+pub fn auto_delegate_events(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    match expand_event_mappings(attr, item) {
         Ok(token_stream) => token_stream.into(),
         Err(e) => e.into_compile_error().into(),
     }

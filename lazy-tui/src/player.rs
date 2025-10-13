@@ -14,7 +14,7 @@ use lazy_core::{
     traits::HasBorderStyleSetter,
 };
 // 导入宏
-use lazy_macro::DeriveHasTuiStyle;
+use lazy_macro::{DeriveHasTuiStyle, auto_delegate_events};
 // 从 ratatui 中导入所需的组件和布局
 use ratatui::{
     Frame,
@@ -23,7 +23,6 @@ use ratatui::{
 
 // 从当前 crate 的子模块中导入 TUI 组件
 use crate::{
-    delegate_to_widget,
     player::{
         artist::ArtistTui, playback::PlaybackTui, playback_mode::PlaybackModeTui,
         playback_progress::PlaybackProgressTui, track::TrackTui, volume::VolumeTui,
@@ -137,39 +136,12 @@ impl HasWidgets for PlayerTui {
     }
 }
 
-impl TuiEventHandle for PlayerTui {
-    /// 处理 TUI 事件，并将其分发给对应的子组件。
-    ///
-    /// 此方法作为事件处理的中央分发器。它使用 `delegate_to_widget!` 宏
-    /// 来匹配不同的事件，并将它们高效地路由到正确的子组件进行处理。
-    fn event_handle(&mut self, event: TuiEnent) {
-        match event {
-            // 当接收到 `Playback` 事件时...
-            TuiEnent::Playback => {
-                // ...将处理逻辑委托给 `PlaybackTui` 子组件。
-                // 闭包 `|w: &mut PlaybackTui| w.toggle_state()` 会在找到组件后执行。
-                delegate_to_widget!(self, PlaybackTui, |w: &mut PlaybackTui| w.toggle_state());
-            }
-            TuiEnent::Volume(delta) => {
-                delegate_to_widget!(self, VolumeTui, |w: &mut VolumeTui| w.adjust_volume(delta));
-            }
-            TuiEnent::PlaybackProgress(duration, progress) => {
-                delegate_to_widget!(self, PlaybackProgressTui, |w: &mut PlaybackProgressTui| {
-                    w.set_progress(progress);
-                    w.set_duration(duration);
-                });
-            }
-            TuiEnent::PlaybackMode => {
-                delegate_to_widget!(self, PlaybackModeTui, |w: &mut PlaybackModeTui| w
-                    .toggle_mode());
-            }
-            TuiEnent::Artist(artist) => {
-                delegate_to_widget!(self, ArtistTui, |w: &mut ArtistTui| w.set_artist(artist));
-            }
-            TuiEnent::Track(track) => {
-                delegate_to_widget!(self, TrackTui, |w: &mut TrackTui| w.set_track(track));
-            }
-            _ => (),
-        }
-    }
-}
+#[auto_delegate_events(
+    TuiEnent::Playback=>(PlaybackTui,toggle_state()),
+    TuiEnent::Volume(delta) => (VolumeTui,adjust_volume(delta)),
+    TuiEnent::PlaybackMode => (PlaybackModeTui,toggle_mode()),
+    TuiEnent::Artist(artist) => (ArtistTui,set_artist(artist)),
+    TuiEnent::Track(track) => (TrackTui,set_track(track)),
+    TuiEnent::PlaybackProgress(duration, progress) => (PlaybackProgressTui,set_progress(progress); set_duration(duration))
+)]
+impl TuiEventHandle for PlayerTui {}
