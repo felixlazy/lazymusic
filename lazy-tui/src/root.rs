@@ -16,7 +16,6 @@ use lazy_core::{
 
 // 从当前 crate 中导入所需的组件和 traits
 use crate::{
-    delegate_to_widget,
     navbar::NavbarTui,
     player::PlayerTui,
     progress::ProgressTui,
@@ -153,6 +152,14 @@ impl RenderTui for RootTui {
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
+
+    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        Some(self)
+    }
 }
 
 impl TuiEnentHandle for RootTui {
@@ -164,21 +171,13 @@ impl TuiEnentHandle for RootTui {
     ///
     /// * `event`: TUI 事件。
     fn enent_handle(&mut self, event: TuiEnent) {
-        match event {
-            // 匹配与播放器相关的事件
-            TuiEnent::Playback
-            | TuiEnent::Volumei(_)
-            | TuiEnent::PlaybackProgress(_, _)
-            | TuiEnent::PlaybackMode
-            | TuiEnent::Artist(_)
-            | TuiEnent::Track(_) => {
-                // 将事件委托给 PlayerTui 组件处理
-                delegate_to_widget!(self, PlayerTui, |w: &mut PlayerTui| w.enent_handle(event));
+        // 将事件广播给所有子组件，让它们自行处理。
+        self.widgets.iter_mut().for_each(|f| {
+            // 通过 as_enent_mut 动态地检查组件是否能处理事件。
+            if let Some(tui_enent) = f.as_enent_mut() {
+                // 如果可以，就调用其 enent_handle 方法。
+                tui_enent.enent_handle(event.clone());
             }
-            TuiEnent::Navber(_) | TuiEnent::NavberIcon(_, _) => {
-                // 将事件委托给 Navbar 组件处理
-                delegate_to_widget!(self, NavbarTui, |w: &mut NavbarTui| w.enent_handle(event));
-            }
-        }
+        });
     }
 }

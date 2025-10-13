@@ -148,6 +148,14 @@ impl RenderTui for NavbarTui {
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
+
+    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        Some(self)
+    }
 }
 
 impl TuiEnentHandle for NavbarTui {

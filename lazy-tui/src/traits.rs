@@ -41,6 +41,22 @@ pub trait RenderTui: Any {
 
     /// 以 `&mut dyn Any` 的形式返回组件。
     fn as_any_mut(&mut self) -> &mut dyn Any;
+
+    /// 尝试将组件作为 `&dyn TuiEnentHandle` 的不可变引用返回。
+    ///
+    /// 主要用于在运行时动态检查一个 `RenderTui` 对象是否也实现了 `TuiEnentHandle`。
+    /// 默认返回 `None`，需要事件处理的组件应重写此方法。
+    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+        None
+    }
+
+    /// 尝试将组件作为 `&mut dyn TuiEnentHandle` 的可变引用返回。
+    ///
+    /// 允许对实现了 `TuiEnentHandle` 的组件进行可变操作，如处理事件。
+    /// 默认返回 `None`，需要事件处理的组件应重写此方法。
+    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        None
+    }
 }
 
 /// 包含其他小部件的组件的 trait。

@@ -14,7 +14,7 @@ use ratatui::{
     widgets::{Block, Gauge, Paragraph},
 };
 
-use crate::traits::{RenderTui, TuiBlock};
+use crate::traits::{RenderTui, TuiBlock, TuiEnentHandle};
 
 /// 一个用于显示进度条的 TUI 组件。
 ///
