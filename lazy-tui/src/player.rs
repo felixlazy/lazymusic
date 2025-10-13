@@ -28,7 +28,7 @@ use crate::{
         artist::ArtistTui, playback::PlaybackTui, playback_mode::PlaybackModeTui,
         playback_progress::PlaybackProgressTui, track::TrackTui, volume::VolumeTui,
     },
-    traits::TuiEnentHandle,
+    traits::TuiEventHandle,
     types::TuiEnent,
 };
 // 从当前 crate 中导入 traits
@@ -123,11 +123,11 @@ impl RenderTui for PlayerTui {
         self
     }
 
-    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+    fn as_event(&self) -> Option<&dyn TuiEventHandle> {
         Some(self)
     }
 
-    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+    fn as_event_mut(&mut self) -> Option<&mut dyn TuiEventHandle> {
         Some(self)
     }
 
@@ -147,12 +147,12 @@ impl HasWidgets for PlayerTui {
     }
 }
 
-impl TuiEnentHandle for PlayerTui {
+impl TuiEventHandle for PlayerTui {
     /// 处理 TUI 事件，并将其分发给对应的子组件。
     ///
     /// 此方法作为事件处理的中央分发器。它使用 `delegate_to_widget!` 宏
     /// 来匹配不同的事件，并将它们高效地路由到正确的子组件进行处理。
-    fn enent_handle(&mut self, event: TuiEnent) {
+    fn event_handle(&mut self, event: TuiEnent) {
         match event {
             // 当接收到 `Playback` 事件时...
             TuiEnent::Playback => {
@@ -160,7 +160,7 @@ impl TuiEnentHandle for PlayerTui {
                 // 闭包 `|w: &mut PlaybackTui| w.toggle_state()` 会在找到组件后执行。
                 delegate_to_widget!(self, PlaybackTui, |w: &mut PlaybackTui| w.toggle_state());
             }
-            TuiEnent::Volumei(delta) => {
+            TuiEnent::Volume(delta) => {
                 delegate_to_widget!(self, VolumeTui, |w: &mut VolumeTui| w.adjust_volume(delta));
             }
             TuiEnent::PlaybackProgress(duration, progress) => {

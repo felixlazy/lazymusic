@@ -5,7 +5,7 @@ use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{Frame, layout::Rect};
 
 use crate::{
-    traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
+    traits::{HasWidgets, RenderTui, TuiBlock, TuiEventHandle},
     types::TuiEnent,
 };
 
@@ -54,11 +54,11 @@ impl RenderTui for RouterViewTui {
         self
     }
 
-    fn as_enent(&self) -> Option<&dyn crate::traits::TuiEnentHandle> {
+    fn as_event(&self) -> Option<&dyn crate::traits::TuiEventHandle> {
         Some(self)
     }
 
-    fn as_enent_mut(&mut self) -> Option<&mut dyn crate::traits::TuiEnentHandle> {
+    fn as_event_mut(&mut self) -> Option<&mut dyn crate::traits::TuiEventHandle> {
         Some(self)
     }
 
@@ -80,6 +80,6 @@ impl HasWidgets for RouterViewTui {
     }
 }
 
-impl TuiEnentHandle for RouterViewTui {
-    fn enent_handle(&mut self, event: TuiEnent) {}
+impl TuiEventHandle for RouterViewTui {
+    fn event_handle(&mut self, event: TuiEnent) {}
 }

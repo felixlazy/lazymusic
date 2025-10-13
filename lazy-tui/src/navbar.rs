@@ -11,7 +11,7 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-use crate::traits::TuiEnentHandle;
+use crate::traits::TuiEventHandle;
 use crate::types::TuiEnent;
 use crate::{
     traits::{RenderTui, TuiBlock},
@@ -149,11 +149,11 @@ impl RenderTui for NavbarTui {
         self
     }
 
-    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+    fn as_event(&self) -> Option<&dyn TuiEventHandle> {
         Some(self)
     }
 
-    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+    fn as_event_mut(&mut self) -> Option<&mut dyn TuiEventHandle> {
         Some(self)
     }
 
@@ -162,18 +162,18 @@ impl RenderTui for NavbarTui {
     }
 }
 
-impl TuiEnentHandle for NavbarTui {
+impl TuiEventHandle for NavbarTui {
     /// 处理 TUI 事件，并将其分发给对应的子组件。
     ///
     /// 此方法作为事件处理的中央分发器。它使用 `delegate_to_widget!` 宏
     /// 来匹配不同的事件，并将它们高效地路由到正确的子组件进行处理。
-    fn enent_handle(&mut self, event: TuiEnent) {
+    fn event_handle(&mut self, event: TuiEnent) {
         match event {
             // 当接收到 `Playback` 事件时...
-            TuiEnent::Navber(direction) => {
+            TuiEnent::Navbar(direction) => {
                 self.toggle_navbar(direction);
             }
-            TuiEnent::NavberIcon(selected_icon, not_selected_icon) => {
+            TuiEnent::NavbarIcon(selected_icon, not_selected_icon) => {
                 self.set_icon(selected_icon, not_selected_icon);
             }
             _ => (),

@@ -20,7 +20,7 @@ use crate::{
     player::PlayerTui,
     progress::ProgressTui,
     router_view::RouterViewTui,
-    traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
+    traits::{HasWidgets, RenderTui, TuiBlock, TuiEventHandle},
     types::TuiEnent, // RenderTui 用于渲染，TuiBlock 用于生成边框块
 };
 
@@ -146,16 +146,16 @@ impl RenderTui for RootTui {
         self
     }
 
-    fn as_enent(&self) -> Option<&dyn TuiEnentHandle> {
+    fn as_event(&self) -> Option<&dyn TuiEventHandle> {
         Some(self)
     }
 
-    fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+    fn as_event_mut(&mut self) -> Option<&mut dyn TuiEventHandle> {
         Some(self)
     }
 }
 
-impl TuiEnentHandle for RootTui {
+impl TuiEventHandle for RootTui {
     /// 处理 TUI 事件。
     ///
     /// 根据事件类型，将事件委托给相应的子组件处理。
@@ -163,13 +163,13 @@ impl TuiEnentHandle for RootTui {
     /// # Arguments
     ///
     /// * `event`: TUI 事件。
-    fn enent_handle(&mut self, event: TuiEnent) {
+    fn event_handle(&mut self, event: TuiEnent) {
         // 将事件广播给所有子组件，让它们自行处理。
         self.widgets.iter_mut().for_each(|f| {
             // 通过 as_enent_mut 动态地检查组件是否能处理事件。
-            if let Some(tui_enent) = f.as_enent_mut() {
+            if let Some(tui_enent) = f.as_event_mut() {
                 // 如果可以，就调用其 enent_handle 方法。
-                tui_enent.enent_handle(event.clone());
+                tui_enent.event_handle(event.clone());
             }
         });
     }

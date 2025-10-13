@@ -10,7 +10,7 @@ pub enum TuiEnent<'a> {
     /// 调整音量
     ///
     /// `i8` 表示音量变化的增量或绝对值。
-    Volumei(i8),
+    Volume(i8),
     /// 更新播放进度
     ///
     /// 第一个 `Duration` 是当前播放时间，第二个是总时长。
@@ -22,9 +22,9 @@ pub enum TuiEnent<'a> {
     /// 更新曲目信息
     Track(Cow<'a, str>),
     /// 导航栏切换
-    Navber(Direction),
+    Navbar(Direction),
     /// 导航栏图标设置
-    NavberIcon(Cow<'a, str>, Cow<'a, str>),
+    NavbarIcon(Cow<'a, str>, Cow<'a, str>),
 }
 
 /// 代表导航方向的枚举

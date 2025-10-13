@@ -18,8 +18,8 @@ pub enum KeyStatus {
     NextTrack,        // 下一首
     PrevTrack,        // 上一首
     PlaySelected,     // 播放当前选中的项目
-    NavberNext,
-    NavberPrve,
+    NavbarNext,
+    NavbarPrve,
     NoOp, // 无操作
 }
 
@@ -61,8 +61,8 @@ impl EventHandler {
             (Char('m'), SwitchMode),       // m → 切换模式
             (Char(']'), NextTrack),        // ] → 下一首
             (Char('['), PrevTrack),        // [ → 上一首
-            (Char('L'), NavberNext),
-            (Char('H'), NavberPrve),
+            (Char('L'), NavbarNext),
+            (Char('H'), NavbarPrve),
             (Enter, PlaySelected), // Enter → 播放选中项目
         ])
     }

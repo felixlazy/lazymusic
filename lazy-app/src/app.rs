@@ -5,7 +5,7 @@ use std::error::Error;
 // 从 lazy_tui 中导入根 TUI 组件和 RenderTui trait
 use lazy_tui::{
     root::RootTui,
-    traits::{RenderTui, TuiEnentHandle},
+    traits::{RenderTui, TuiEventHandle},
 };
 // 从 tokio 中导入时间相关的组件
 use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
@@ -114,20 +114,20 @@ impl App {
         use crate::event::KeyStatus::*;
         use lazy_tui::types::{Direction, TuiEnent::*};
         match key_status {
-            Quit => self.stop(),                                   // q → 退出程序
-            TogglePlay => self.tui.enent_handle(Playback),         // p → 播放/暂停
-            VolumeIncrease => self.tui.enent_handle(Volumei(10)),  // + → 增加音量
-            VolumeDecrease => self.tui.enent_handle(Volumei(-10)), // - → 减少音量
-            ProgressIncrease => (),                                // l → 快进
-            ProgressDecrease => (),                                // h → 快退
-            PickerNext => (),                                      // j → 选择下一个
-            PickerPrev => (),                                      // k → 选择上一个
-            SwitchMode => self.tui.enent_handle(PlaybackMode),     // m → 切换模式
-            NextTrack => (),                                       // ] → 下一首
-            PrevTrack => (),                                       // [ → 上一首
-            PlaySelected => (),                                    // Enter → 播放选中
-            NavberNext => self.tui.enent_handle(Navber(Direction::Right)),
-            NavberPrve => self.tui.enent_handle(Navber(Direction::Left)),
+            Quit => self.stop(),                                  // q → 退出程序
+            TogglePlay => self.tui.event_handle(Playback),        // p → 播放/暂停
+            VolumeIncrease => self.tui.event_handle(Volume(10)),  // + → 增加音量
+            VolumeDecrease => self.tui.event_handle(Volume(-10)), // - → 减少音量
+            ProgressIncrease => (),                               // l → 快进
+            ProgressDecrease => (),                               // h → 快退
+            PickerNext => (),                                     // j → 选择下一个
+            PickerPrev => (),                                     // k → 选择上一个
+            SwitchMode => self.tui.event_handle(PlaybackMode),    // m → 切换模式
+            NextTrack => (),                                      // ] → 下一首
+            PrevTrack => (),                                      // [ → 上一首
+            PlaySelected => (),                                   // Enter → 播放选中
+            NavbarNext => self.tui.event_handle(Navbar(Direction::Right)),
+            NavbarPrve => self.tui.event_handle(Navbar(Direction::Left)),
             NoOp => (), // 无操作
         }
     }
