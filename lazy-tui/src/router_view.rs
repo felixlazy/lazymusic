@@ -46,14 +46,6 @@ impl RenderTui for RouterViewTui {
         // TODO: 在此实现活动子组件的渲染逻辑
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
     fn as_event(&self) -> Option<&dyn crate::traits::TuiEventHandle> {
         Some(self)
     }

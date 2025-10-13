@@ -60,16 +60,6 @@ impl RenderTui for PlaybackProgressTui {
         // 在指定区域渲染小部件
         frame.render_widget(widget, rect);
     }
-
-    /// 将 `self` 转换为 `&dyn Any`，用于动态类型转换。
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    /// 将 `self` 转换为 `&mut dyn Any`，用于动态类型转换。
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
 }
 
 impl PlaybackProgressTui {

@@ -139,16 +139,6 @@ impl RenderTui for NavbarTui {
         frame.render_widget(widget, inner);
     }
 
-    /// 将 `Navbar` 实例转换为 `&dyn Any`，以便在运行时进行类型转换。
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    /// 将 `Navbar` 实例转换为 `&mut dyn Any`，以便在运行时进行可变类型转换。
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
     fn as_event(&self) -> Option<&dyn TuiEventHandle> {
         Some(self)
     }

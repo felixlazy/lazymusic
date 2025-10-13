@@ -31,16 +31,28 @@ pub trait TuiBlock: HasTitleStyle + HasBorderStyle + HasTuiStyle {
 
 impl<U> TuiBlock for U where U: HasBorderStyle + HasTitleStyle + HasTuiStyle {}
 
+/// 提供 Any 类型向下转型支持的 trait。
+pub trait Downcast {
+    fn as_any(&self) -> &dyn Any;
+    fn as_any_mut(&mut self) -> &mut dyn Any;
+}
+
+/// 对所有实现 `Any` 的类型自动实现 Downcast。
+impl<T: Any> Downcast for T {
+    #[inline]
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+
+    #[inline]
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+}
 /// 可在 TUI 中渲染的组件的 trait。
-pub trait RenderTui: Any {
+pub trait RenderTui: Downcast {
     /// 在给定的框架和区域中渲染组件。
     fn render(&self, frame: &mut Frame, rect: Rect);
-
-    /// 以 `&dyn Any` 的形式返回组件。
-    fn as_any(&self) -> &dyn Any;
-
-    /// 以 `&mut dyn Any` 的形式返回组件。
-    fn as_any_mut(&mut self) -> &mut dyn Any;
 
     /// 尝试将组件作为 `&dyn TuiEnentHandle` 的不可变引用返回。
     ///
@@ -79,13 +91,13 @@ pub trait HasWidgets {
     fn get_widget_mut<T: 'static>(&mut self) -> Option<&mut T> {
         self.get_widgets_mut()
             .iter_mut()
-            .find_map(|widget| widget.as_any_mut().downcast_mut::<T>())
+            .find_map(|widget| widget.as_mut().as_any_mut().downcast_mut::<T>())
     }
 
     fn get_widget<T: 'static>(&self) -> Option<&T> {
         self.get_widgets()
             .iter()
-            .find_map(|widget| widget.as_any().downcast_ref::<T>())
+            .find_map(|widget| widget.as_ref().as_any().downcast_ref::<T>())
     }
 }
 

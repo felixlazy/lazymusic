@@ -18,7 +18,7 @@ use crate::traits::RenderTui;
 /// `ArtistTui` 用于在 TUI 中显示当前播放歌手。
 #[derive(DeriveHasTuiStyle)] // 自动派生 HasTuiStyle trait，实现 tui_style() 和 tui_alignment() 等方法
 pub struct ArtistTui {
-    artist: String,   // 当前歌手名称
+    artist: String,  // 当前歌手名称
     style: TuiStyle, // TUI 样式（颜色、对齐方式等）
 }
 
@@ -53,16 +53,6 @@ impl RenderTui for ArtistTui {
             .alignment(self.tui_alignment());
         // 在 frame 的指定 rect 区域渲染 widget
         frame.render_widget(widget, rect);
-    }
-
-    /// 将 `self` 转换为 `&dyn Any`。
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    /// 将 `self` 转换为 `&mut dyn Any`。
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
     }
 }
 

@@ -54,16 +54,6 @@ impl RenderTui for TrackTui {
         // 在 frame 的指定 rect 区域渲染 widget
         frame.render_widget(widget, rect);
     }
-
-    /// 将 `self` 转换为 `&dyn Any`。
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    /// 将 `self` 转换为 `&mut dyn Any`。
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
 }
 
 impl TrackTui {

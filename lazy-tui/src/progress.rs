@@ -74,16 +74,6 @@ impl RenderTui for ProgressTui {
         frame.render_widget(right_haft_circle, row[2]);
     }
 
-    /// 以 `dyn Any` 的形式返回对组件的引用。
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    /// 以 `dyn Any` 的形式返回对组件的可变引用。
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-        self
-    }
-
     fn as_border_mut(&mut self) -> Option<&mut dyn HasBorderStyleSetter> {
         Some(self)
     }
