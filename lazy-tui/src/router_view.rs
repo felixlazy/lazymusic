@@ -4,7 +4,10 @@ use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{Frame, layout::Rect};
 
-use crate::traits::{HasWidgets, RenderTui, TuiBlock};
+use crate::{
+    traits::{HasWidgets, RenderTui, TuiBlock, TuiEnentHandle},
+    types::TuiEnent,
+};
 
 /// `RouterViewTui` 是一个多功能视图容器，扮演“视图路由”的角色。
 #[derive(DeriveHasTuiStyle)]
@@ -50,6 +53,18 @@ impl RenderTui for RouterViewTui {
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
     }
+
+    fn as_enent(&self) -> Option<&dyn crate::traits::TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_enent_mut(&mut self) -> Option<&mut dyn crate::traits::TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_border_mut(&mut self) -> Option<&mut dyn lazy_core::traits::HasBorderStyleSetter> {
+        Some(self)
+    }
 }
 
 /// 为 `RouterViewTui` 实现 `HasWidgets` trait，使其能够管理子组件。
@@ -63,4 +78,8 @@ impl HasWidgets for RouterViewTui {
     fn get_widgets(&self) -> &Vec<Box<dyn RenderTui>> {
         &self.widgets
     }
+}
+
+impl TuiEnentHandle for RouterViewTui {
+    fn enent_handle(&mut self, event: TuiEnent) {}
 }

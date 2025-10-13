@@ -1,6 +1,6 @@
 //! 该模块定义了 TUI 组件的 traits。
 
-use lazy_core::traits::{HasBorderStyle, HasTitleStyle, HasTuiStyle};
+use lazy_core::traits::{HasBorderStyle, HasBorderStyleSetter, HasTitleStyle, HasTuiStyle};
 use ratatui::{Frame, layout::Rect, widgets::Block};
 use std::any::Any;
 
@@ -55,6 +55,14 @@ pub trait RenderTui: Any {
     /// 允许对实现了 `TuiEnentHandle` 的组件进行可变操作，如处理事件。
     /// 默认返回 `None`，需要事件处理的组件应重写此方法。
     fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        None
+    }
+
+    /// 尝试将组件作为 `&mut dyn HasBorderStyleSetter` 的可变引用返回。
+    ///
+    /// 主要用于在运行时动态地对组件边框进行操作。
+    /// 默认返回 `None`，需要边框操作的组件应重写此方法。
+    fn as_border_mut(&mut self) -> Option<&mut dyn HasBorderStyleSetter> {
         None
     }
 }

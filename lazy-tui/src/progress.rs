@@ -5,16 +5,16 @@
 
 use lazy_core::{
     structs::{BorderStyle, TitleStyle, TuiStyle},
-    traits::HasTuiStyle,
+    traits::{HasBorderStyleSetter, HasTuiStyle},
 };
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Stylize},
-    widgets::{Block, Gauge, Paragraph},
+    widgets::{Gauge, Paragraph},
 };
 
-use crate::traits::{RenderTui, TuiBlock, TuiEnentHandle};
+use crate::traits::{RenderTui, TuiBlock};
 
 /// 一个用于显示进度条的 TUI 组件。
 ///
@@ -82,6 +82,10 @@ impl RenderTui for ProgressTui {
     /// 以 `dyn Any` 的形式返回对组件的可变引用。
     fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
         self
+    }
+
+    fn as_border_mut(&mut self) -> Option<&mut dyn HasBorderStyleSetter> {
+        Some(self)
     }
 }
 

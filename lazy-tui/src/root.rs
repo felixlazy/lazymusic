@@ -67,23 +67,16 @@ impl HasWidgets for RootTui {
 
 impl RootTui {
     /// 切换当前组件及其子组件的边框显示状态。
-    pub fn toggle_all_border(&mut self) {
+    pub fn toggle_widgets_border(&mut self) {
         self.toggle_border();
-
-        // 宏，用于切换指定类型子组件的边框
-        macro_rules! toggle_widget_border {
-            ($widget_type:ty) => {
-                if let Some(widget) = self.get_widget_mut::<$widget_type>() {
-                    widget.toggle_border();
-                }
-            };
-        }
-
-        // 切换 PlayerTui 和 ProgressTui 的边框
-        toggle_widget_border!(PlayerTui);
-        toggle_widget_border!(ProgressTui);
-        toggle_widget_border!(RouterViewTui);
-        toggle_widget_border!(NavbarTui);
+        // 将边框切换操作广播给所有子组件。
+        // 利用 `as_border_mut` 方法获取 trait object，父组件无需关心子组件的具体类型，
+        // 即可统一调用 `toggle_border` 方法，实现对边框的动态控制。
+        self.widgets.iter_mut().for_each(|f| {
+            if let Some(board) = f.as_border_mut() {
+                board.toggle_border();
+            }
+        });
     }
 
     /// 检查指定类型的子组件是否具有边框。

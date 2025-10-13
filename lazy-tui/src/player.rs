@@ -9,7 +9,10 @@ mod track;
 mod volume;
 
 // 从 lazy_core 中导入结构体
-use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
+use lazy_core::{
+    structs::{BorderStyle, TitleStyle, TuiStyle},
+    traits::HasBorderStyleSetter,
+};
 // 导入宏
 use lazy_macro::DeriveHasTuiStyle;
 // 从 ratatui 中导入所需的组件和布局
@@ -125,6 +128,10 @@ impl RenderTui for PlayerTui {
     }
 
     fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_border_mut(&mut self) -> Option<&mut dyn HasBorderStyleSetter> {
         Some(self)
     }
 }

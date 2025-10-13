@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use lazy_core::structs::{BorderStyle, TitleStyle, TuiStyle};
-use lazy_core::traits::HasTuiStyle;
+use lazy_core::traits::{HasBorderStyleSetter, HasTuiStyle};
 use lazy_macro::DeriveHasTuiStyle;
 use ratatui::{
     Frame,
@@ -154,6 +154,10 @@ impl RenderTui for NavbarTui {
     }
 
     fn as_enent_mut(&mut self) -> Option<&mut dyn TuiEnentHandle> {
+        Some(self)
+    }
+
+    fn as_border_mut(&mut self) -> Option<&mut dyn HasBorderStyleSetter> {
         Some(self)
     }
 }
