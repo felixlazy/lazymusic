@@ -85,3 +85,76 @@ impl PlaybackProgressTui {
         self.duration = duration;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+    use std::time::Duration;
+
+    #[test]
+    fn test_playback_progress_tui_default() {
+        let pppt_tui = PlaybackProgressTui::default();
+        assert_eq!(pppt_tui.progress, Duration::ZERO);
+        assert_eq!(pppt_tui.duration, Duration::ZERO);
+        assert_eq!(pppt_tui.tui_alignment(), Alignment::Left);
+    }
+
+    #[test]
+    fn test_playback_progress_tui_set_progress() {
+        let mut pppt_tui = PlaybackProgressTui::default();
+        let test_duration = Duration::from_secs(123);
+        pppt_tui.set_progress(test_duration);
+        assert_eq!(pppt_tui.progress, test_duration);
+    }
+
+    #[test]
+    fn test_playback_progress_tui_set_duration() {
+        let mut pppt_tui = PlaybackProgressTui::default();
+        let test_duration = Duration::from_secs(345);
+        pppt_tui.set_duration(test_duration);
+        assert_eq!(pppt_tui.duration, test_duration);
+    }
+
+    #[test]
+    fn test_playback_progress_tui_format_duration() {
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::ZERO),
+            "00:00"
+        );
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::from_secs(5)),
+            "00:05"
+        );
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::from_secs(60)),
+            "01:00"
+        );
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::from_secs(123)),
+            "02:03"
+        );
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::from_secs(3600)),
+            "60:00"
+        );
+        assert_eq!(
+            PlaybackProgressTui::format_duration(Duration::from_secs(3661)),
+            "61:01"
+        );
+    }
+
+    #[test]
+    fn test_playback_progress_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let pppt_tui = PlaybackProgressTui::default();
+
+        terminal
+            .draw(|f| {
+                pppt_tui.render(f, f.area());
+            })
+            .unwrap();
+    }
+}
+
