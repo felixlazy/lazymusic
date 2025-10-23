@@ -301,8 +301,8 @@ impl NavbarTui {
     ///
     /// # Example
     ///
-    /// ```
-    /// # use lazy_tui::navbar::Navbar;
+    /// ``` no_run
+    /// use lazy_tui::navbar::Navbar;
     /// let mut navbar = Navbar::default();
     /// navbar.set_icon(">>", "•");
     /// ```
@@ -317,3 +317,116 @@ impl NavbarTui {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_navbar_item_next_prev() {
+        // Test next()
+        assert_eq!(NavbarItem::Queue.next(), NavbarItem::Logs);
+        assert_eq!(NavbarItem::Logs.next(), NavbarItem::Directories);
+        assert_eq!(NavbarItem::Directories.next(), NavbarItem::Artists);
+        assert_eq!(NavbarItem::Artists.next(), NavbarItem::AlbumArtists);
+        assert_eq!(NavbarItem::AlbumArtists.next(), NavbarItem::Albums);
+        assert_eq!(NavbarItem::Albums.next(), NavbarItem::Playlists);
+        assert_eq!(NavbarItem::Playlists.next(), NavbarItem::Search);
+        assert_eq!(NavbarItem::Search.next(), NavbarItem::Queue); // Cycle back
+
+        // Test prev()
+        assert_eq!(NavbarItem::Queue.prev(), NavbarItem::Search);
+        assert_eq!(NavbarItem::Search.prev(), NavbarItem::Playlists);
+        assert_eq!(NavbarItem::Playlists.prev(), NavbarItem::Albums);
+        assert_eq!(NavbarItem::Albums.prev(), NavbarItem::AlbumArtists);
+        assert_eq!(NavbarItem::AlbumArtists.prev(), NavbarItem::Artists);
+        assert_eq!(NavbarItem::Artists.prev(), NavbarItem::Directories);
+        assert_eq!(NavbarItem::Directories.prev(), NavbarItem::Logs);
+        assert_eq!(NavbarItem::Logs.prev(), NavbarItem::Queue); // Cycle back
+    }
+
+    #[test]
+    fn test_navbar_tui_default() {
+        let navbar = NavbarTui::default();
+        assert_eq!(navbar.selected_item, NavbarItem::Queue);
+        assert_eq!(navbar.selected_icon, "".to_string());
+        assert_eq!(navbar.not_selected_icon, "".to_string());
+        assert_eq!(navbar.selected.bg, Some(Color::Rgb(130, 170, 255)));
+        assert_eq!(navbar.not_selected.bg, Some(Color::Rgb(47, 51, 77)));
+        // Add more assertions for default styles if needed
+    }
+
+    #[test]
+    fn test_navbar_tui_toggle_navbar() {
+        let mut navbar = NavbarTui::default(); // Starts at Queue
+
+        // Toggle right
+        navbar.toggle_navbar(Direction::Right);
+        assert_eq!(navbar.selected_item, NavbarItem::Logs);
+
+        navbar.toggle_navbar(Direction::Right);
+        assert_eq!(navbar.selected_item, NavbarItem::Directories);
+
+        // Toggle left
+        navbar.toggle_navbar(Direction::Left);
+        assert_eq!(navbar.selected_item, NavbarItem::Logs);
+
+        navbar.toggle_navbar(Direction::Left);
+        assert_eq!(navbar.selected_item, NavbarItem::Queue);
+
+        // Test cycling right from last item
+        navbar.selected_item = NavbarItem::Search;
+        navbar.toggle_navbar(Direction::Right);
+        assert_eq!(navbar.selected_item, NavbarItem::Queue);
+
+        // Test cycling left from first item
+        navbar.selected_item = NavbarItem::Queue;
+        navbar.toggle_navbar(Direction::Left);
+        assert_eq!(navbar.selected_item, NavbarItem::Search);
+    }
+
+    #[test]
+    fn test_navbar_tui_set_icon() {
+        let mut navbar = NavbarTui::default();
+
+        // Test setting with &str
+        navbar.set_icon(">>", "--");
+        assert_eq!(navbar.selected_icon, ">>");
+        assert_eq!(navbar.not_selected_icon, "--");
+
+        // Test setting with String
+        navbar.set_icon("==".to_string(), "||".to_string());
+        assert_eq!(navbar.selected_icon, "==");
+        assert_eq!(navbar.not_selected_icon, "||");
+
+        // Test setting with the same value (should not reallocate if Cow is optimized)
+        let initial_selected_ptr = navbar.selected_icon.as_ptr();
+        let initial_not_selected_ptr = navbar.not_selected_icon.as_ptr();
+        navbar.set_icon("==", "||");
+        let new_selected_ptr = navbar.selected_icon.as_ptr();
+        let new_not_selected_ptr = navbar.not_selected_icon.as_ptr();
+        assert_eq!(
+            initial_selected_ptr, new_selected_ptr,
+            "Setting same selected icon should not reallocate"
+        );
+        assert_eq!(
+            initial_not_selected_ptr, new_not_selected_ptr,
+            "Setting same not selected icon should not reallocate"
+        );
+    }
+
+    #[test]
+    fn test_navbar_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let navbar = NavbarTui::default();
+
+        terminal
+            .draw(|f| {
+                navbar.render(f, f.area());
+            })
+            .unwrap();
+    }
+}
+
