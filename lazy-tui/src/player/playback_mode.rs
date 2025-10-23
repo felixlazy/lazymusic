@@ -130,3 +130,119 @@ impl PlaybackModeTui {
         self.mode
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_playback_mode_next() {
+        assert_eq!(PlaybackMode::Repeat.next(), PlaybackMode::Random);
+        assert_eq!(PlaybackMode::Random.next(), PlaybackMode::Consume);
+        assert_eq!(PlaybackMode::Consume.next(), PlaybackMode::Single);
+        assert_eq!(PlaybackMode::Single.next(), PlaybackMode::Repeat);
+    }
+
+    #[test]
+    fn test_playback_mode_tui_default() {
+        let pbm_tui = PlaybackModeTui::default();
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Repeat);
+        assert_eq!(pbm_tui.tui_alignment(), Alignment::Right);
+    }
+
+    #[test]
+    fn test_playback_mode_tui_toggle_mode() {
+        let mut pbm_tui = PlaybackModeTui::default(); // Starts at Repeat
+
+        pbm_tui.toggle_mode();
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Random);
+
+        pbm_tui.toggle_mode();
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Consume);
+
+        pbm_tui.toggle_mode();
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Single);
+
+        pbm_tui.toggle_mode();
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Repeat); // Cycles back
+    }
+
+    #[test]
+    fn test_playback_mode_tui_set_mode() {
+        let mut pbm_tui = PlaybackModeTui::default();
+        pbm_tui.set_mode(PlaybackMode::Single);
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Single);
+
+        pbm_tui.set_mode(PlaybackMode::Random);
+        assert_eq!(pbm_tui.mode(), PlaybackMode::Random);
+    }
+
+    #[test]
+    fn test_playback_mode_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let pbm_tui = PlaybackModeTui::default();
+
+        terminal
+            .draw(|f| {
+                pbm_tui.render(f, f.area());
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn test_playback_mode_tui_build_mode_line_highlighting() {
+        let modes = PlaybackMode::variants();
+        for &active_mode in modes {
+            let mut pbm_tui = PlaybackModeTui::default();
+            pbm_tui.set_mode(active_mode);
+
+            let line = pbm_tui.build_mode_line();
+            let spans = line.spans;
+
+            for (i, &mode) in modes.iter().enumerate() {
+                let expected_text = format!("{:?}", mode);
+                let span_text = spans[i * 2].content.to_string(); // *2 because of " | " separator
+
+                assert_eq!(
+                    span_text, expected_text,
+                    "Mode text mismatch for {:?}",
+                    mode
+                );
+
+                if mode == active_mode {
+                    assert_eq!(
+                        spans[i * 2].style.fg,
+                        pbm_tui.tui_style().fg,
+                        "Active mode {:?} should have foreground color from tui_style",
+                        mode
+                    );
+                    // Check other style properties if necessary, e.g., bg, modifier
+                } else {
+                    assert_eq!(
+                        spans[i * 2].style.fg,
+                        Some(Color::Gray),
+                        "Inactive mode {:?} should have gray foreground color",
+                        mode
+                    );
+                }
+
+                // Check separator style if it exists
+                if i < modes.len() - 1 {
+                    assert_eq!(
+                        spans[i * 2 + 1].content.to_string(),
+                        " | ",
+                        "Separator text mismatch"
+                    );
+                    assert_eq!(
+                        spans[i * 2 + 1].style.fg,
+                        Some(Color::White),
+                        "Separator should be white"
+                    );
+                }
+            }
+        }
+    }
+}
+
