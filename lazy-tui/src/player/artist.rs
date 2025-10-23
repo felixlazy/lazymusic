@@ -31,7 +31,7 @@ impl Default for ArtistTui {
         style.set_alignment(Alignment::Center);
         Self {
             // 默认歌手名称
-            artist: "Various Artists".to_string(),
+            artist: "Not Artist".to_string(),
             style,
         }
     }
@@ -68,9 +68,66 @@ impl ArtistTui {
     /// 例如 `&str` 或 `String`。
     /// 这种方法可以避免在 artist 未更改时不必要的内存分配。
     pub(crate) fn set_artist<'a>(&mut self, artist: impl Into<Cow<'a, str>>) {
-        let artist = artist.into();
+        let artist: Cow<str> = artist.into();
         if self.artist != artist {
             self.artist = artist.into_owned();
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_artist_tui_default() {
+        let artist_tui = ArtistTui::default();
+        assert_eq!(artist_tui.artist(), "Not Artist");
+        assert_eq!(artist_tui.tui_alignment(), Alignment::Center);
+    }
+
+    #[test]
+    fn test_artist_tui_set_artist() {
+        let mut artist_tui = ArtistTui::default();
+
+        // Test setting with &str
+        artist_tui.set_artist("New Artist");
+        assert_eq!(artist_tui.artist(), "New Artist");
+
+        // Test setting with String
+        artist_tui.set_artist("Another Artist".to_string());
+        assert_eq!(artist_tui.artist(), "Another Artist");
+
+        // Test setting with the same value (should not reallocate if Cow is optimized)
+        let initial_ptr = artist_tui.artist().as_ptr();
+        artist_tui.set_artist("Another Artist");
+        let new_ptr = artist_tui.artist().as_ptr();
+        assert_eq!(
+            initial_ptr, new_ptr,
+            "Setting same artist should not reallocate"
+        );
+        assert_eq!(artist_tui.artist(), "Another Artist");
+    }
+
+    #[test]
+    fn test_artist_tui_artist_getter() {
+        let mut artist_tui = ArtistTui::default();
+        artist_tui.set_artist("Test Getter");
+        assert_eq!(artist_tui.artist(), "Test Getter");
+    }
+
+    #[test]
+    fn test_artist_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let artist_tui = ArtistTui::default();
+
+        terminal
+            .draw(|f| {
+                artist_tui.render(f, f.area());
+            })
+            .unwrap();
+    }
+}
+
