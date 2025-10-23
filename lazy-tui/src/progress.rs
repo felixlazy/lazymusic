@@ -54,7 +54,14 @@ impl RenderTui for ProgressTui {
         // 渲染根组件边框和标题
         frame.render_widget(self.to_block().bg(self.border.bg()), rect);
 
-        let left_haft_circle = Paragraph::new("").alignment(Alignment::Right);
+        let left_haft_circle =
+            Paragraph::new("")
+                .alignment(Alignment::Right)
+                .fg(if self.ratio == 0.0 {
+                    self.style.bg()
+                } else {
+                    self.style.fg()
+                });
         let bars = Gauge::default()
             .gauge_style(self.tui_style())
             .label("")
@@ -96,3 +103,95 @@ impl ProgressTui {
         self.ratio = 0.0;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_progress_tui_default() {
+        let progress = ProgressTui::default();
+        assert_eq!(progress.ratio(), 0.0);
+        assert_eq!(progress.style.bg(), Color::Rgb(47, 51, 77));
+        // Add more assertions for default styles if needed
+    }
+
+    #[test]
+    fn test_progress_tui_set_ratio() {
+        let mut progress = ProgressTui::default();
+
+        progress.set_ratio(0.5);
+        assert_eq!(progress.ratio(), 0.5);
+
+        progress.set_ratio(1.5);
+        assert_eq!(progress.ratio(), 1.0, "Ratio should be clamped at 1.0");
+
+        progress.set_ratio(-0.5);
+        assert_eq!(progress.ratio(), 0.0, "Ratio should be clamped at 0.0");
+    }
+
+    #[test]
+    fn test_progress_tui_reset_ratio() {
+        let mut progress = ProgressTui::default();
+        progress.set_ratio(0.7);
+        progress.reset_ratio();
+        assert_eq!(progress.ratio(), 0.0);
+    }
+
+    #[test]
+    fn test_progress_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let progress = ProgressTui::default();
+
+        terminal
+            .draw(|f| {
+                progress.render(f, f.area());
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn test_progress_tui_render_left_half_circle_color() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let mut progress = ProgressTui::default();
+
+        // Test when ratio is 0.0
+        progress.set_ratio(0.0);
+        terminal
+            .draw(|f| {
+                progress.render(f, f.area());
+            })
+            .unwrap();
+        let buffer = terminal.backend().buffer();
+        // The left half-circle is in row[0], which is 2 chars wide.
+        // The rect for row[0] starts at x=0, y=0 (relative to inner area)
+        // The inner area starts at (1,1) if there's a border.
+        // row[0] will be at (1,1) with width 2.
+        // The character '' is at (1,1).
+        let cell = buffer.cell((1, 1));
+        assert_eq!(
+            cell.unwrap().fg,
+            progress.style.bg(),
+            "Left half-circle color should be background color when ratio is 0.0"
+        );
+
+        // Test when ratio is > 0.0
+        progress.set_ratio(0.5);
+        terminal
+            .draw(|f| {
+                progress.render(f, f.area());
+            })
+            .unwrap();
+        let buffer = terminal.backend().buffer();
+        let cell = buffer.cell((1, 1));
+        assert_eq!(
+            cell.unwrap().fg,
+            progress.style.fg(),
+            "Left half-circle color should be foreground color when ratio is > 0.0"
+        );
+    }
+}
+
