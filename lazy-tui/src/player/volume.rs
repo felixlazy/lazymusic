@@ -82,3 +82,111 @@ impl VolumeTui {
         self.volume
     }
 }
+#[cfg(test)]
+mod test {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_volume_tui() {
+        let volume = VolumeTui::default();
+
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                volume.render(f, f.area());
+            })
+            .unwrap();
+    }
+    #[test]
+    fn test_volume_tui_adjust_volume() {
+        let mut volume = VolumeTui::default(); // 默认音量是 50
+
+        // 1. 测试增加音量
+        volume.set_volume(50); // 重置为已知状态
+        volume.adjust_volume(10);
+        assert_eq!(volume.volume(), 60, "测试音量增加");
+
+        // 2. 测试减少音量
+        volume.set_volume(50); // 重置为已知状态
+        volume.adjust_volume(-20);
+        assert_eq!(volume.volume(), 30, "测试音量减少");
+
+        // 3. 测试在上限处钳位 (Clamping)
+        volume.set_volume(95);
+        volume.adjust_volume(10);
+        assert_eq!(volume.volume(), 100, "音量增加时应在100处被截断");
+
+        // 4. 测试在下限处钳位 (Clamping)
+        volume.set_volume(5);
+        volume.adjust_volume(-10);
+        assert_eq!(volume.volume(), 0, "音量减少时应在0处被截断");
+    }
+
+    #[test]
+    fn test_volume_tui_get_volume() {
+        let mut volume = VolumeTui::default();
+        volume.set_volume(50);
+        assert_eq!(volume.volume(), 50);
+    }
+
+    #[test]
+    fn test_volume_tui_set_volume() {
+        let mut volume = VolumeTui::default();
+        volume.set_volume(80);
+        assert_eq!(volume.volume(), 80);
+    }
+
+    #[test]
+    fn test_pick_icon_logic() {
+        // 测试 ICONS_BLOCK (6个图标) 的边界情况
+        // 格式: (音量, 预期索引)
+        let block_cases = [
+            (0, 0), // 0% -> index 0
+            (1, 1), // 1% -> index 1
+            (20, 1),
+            (21, 2), // 21% -> index 2
+            (40, 2),
+            (41, 3),
+            (60, 3),
+            (61, 4),
+            (80, 4),
+            (81, 5), // 81% -> index 5
+            (100, 5),
+        ];
+
+        for (volume, expected_idx) in block_cases {
+            let icon = VolumeTui::pick_icon(volume, &VolumeTui::ICONS_BLOCK);
+            assert_eq!(
+                icon,
+                VolumeTui::ICONS_BLOCK[expected_idx],
+                "ICONS_BLOCK: 音量 {} 应该对应索引 {}",
+                volume,
+                expected_idx
+            );
+        }
+
+        // 测试 VOLUME_STATUS (3个图标) 的边界情况
+        // 逻辑是 (vol * 2).div_ceil(100)，所以边界在 50
+        let status_cases = [
+            (0, 0), // 0% -> index 0 (静音)
+            (1, 1), // 1% -> index 1 (低音量)
+            (50, 1),
+            (51, 2), // 51% -> index 2 (高音量)
+            (100, 2),
+        ];
+
+        for (volume, expected_idx) in status_cases {
+            let icon = VolumeTui::pick_icon(volume, &VolumeTui::VOLUME_STATUS);
+            assert_eq!(
+                icon,
+                VolumeTui::VOLUME_STATUS[expected_idx],
+                "VOLUME_STATUS: 音量 {} 应该对应索引 {}",
+                volume,
+                expected_idx
+            );
+        }
+    }
+}
