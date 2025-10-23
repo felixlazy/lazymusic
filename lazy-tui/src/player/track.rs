@@ -31,7 +31,7 @@ impl Default for TrackTui {
         style.set_alignment(Alignment::Center);
         Self {
             // 默认曲目名称
-            track: "lazy music".to_string(),
+            track: "Not Song".to_string(),
             style,
         }
     }
@@ -74,3 +74,60 @@ impl TrackTui {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_track_tui_default() {
+        let track_tui = TrackTui::default();
+        assert_eq!(track_tui.track(), "Not Song");
+        assert_eq!(track_tui.tui_alignment(), Alignment::Center);
+    }
+
+    #[test]
+    fn test_track_tui_set_track() {
+        let mut track_tui = TrackTui::default();
+
+        // Test setting with &str
+        track_tui.set_track("New Song");
+        assert_eq!(track_tui.track(), "New Song");
+
+        // Test setting with String
+        track_tui.set_track("Another Song".to_string());
+        assert_eq!(track_tui.track(), "Another Song");
+
+        // Test setting with the same value (should not reallocate if Cow is optimized)
+        let initial_ptr = track_tui.track().as_ptr();
+        track_tui.set_track("Another Song");
+        let new_ptr = track_tui.track().as_ptr();
+        assert_eq!(
+            initial_ptr, new_ptr,
+            "Setting same track should not reallocate"
+        );
+        assert_eq!(track_tui.track(), "Another Song");
+    }
+
+    #[test]
+    fn test_track_tui_track_getter() {
+        let mut track_tui = TrackTui::default();
+        track_tui.set_track("Test Getter");
+        assert_eq!(track_tui.track(), "Test Getter");
+    }
+
+    #[test]
+    fn test_track_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let track_tui = TrackTui::default();
+
+        terminal
+            .draw(|f| {
+                track_tui.render(f, f.area());
+            })
+            .unwrap();
+    }
+}
+
