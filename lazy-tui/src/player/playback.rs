@@ -9,7 +9,7 @@ use ratatui::{
 use crate::traits::RenderTui;
 
 /// 播放状态枚举
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum PlaybackState {
     Playing,
     Paused,
@@ -71,3 +71,73 @@ impl PlaybackTui {
         };
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::{Terminal, backend::TestBackend};
+
+    #[test]
+    fn test_playback_state_default() {
+        assert_eq!(PlaybackState::default(), PlaybackState::Stopped);
+    }
+
+    #[test]
+    fn test_playback_tui_default() {
+        let pbt_tui = PlaybackTui::default();
+        assert_eq!(pbt_tui.state(), PlaybackState::Stopped);
+        assert_eq!(pbt_tui.tui_alignment(), Alignment::Left);
+    }
+
+    #[test]
+    fn test_playback_tui_set_state() {
+        let mut pbt_tui = PlaybackTui::default();
+        pbt_tui.set_playback_state(PlaybackState::Playing);
+        assert_eq!(pbt_tui.state(), PlaybackState::Playing);
+
+        pbt_tui.set_playback_state(PlaybackState::Paused);
+        assert_eq!(pbt_tui.state(), PlaybackState::Paused);
+    }
+
+    #[test]
+    fn test_playback_tui_get_playback_icon() {
+        let mut pbt_tui = PlaybackTui::default();
+
+        pbt_tui.set_playback_state(PlaybackState::Playing);
+        assert_eq!(pbt_tui.get_playback_icon(), PlaybackTui::PLAYBACK_ICON[0]);
+
+        pbt_tui.set_playback_state(PlaybackState::Paused);
+        assert_eq!(pbt_tui.get_playback_icon(), PlaybackTui::PLAYBACK_ICON[1]);
+
+        pbt_tui.set_playback_state(PlaybackState::Stopped);
+        assert_eq!(pbt_tui.get_playback_icon(), PlaybackTui::PLAYBACK_ICON[2]);
+    }
+
+    #[test]
+    fn test_playback_tui_toggle_state() {
+        let mut pbt_tui = PlaybackTui::default(); // Starts at Stopped
+
+        pbt_tui.toggle_state();
+        assert_eq!(pbt_tui.state(), PlaybackState::Playing);
+
+        pbt_tui.toggle_state();
+        assert_eq!(pbt_tui.state(), PlaybackState::Paused);
+
+        pbt_tui.toggle_state();
+        assert_eq!(pbt_tui.state(), PlaybackState::Playing);
+    }
+
+    #[test]
+    fn test_playback_tui_render_smoke_test() {
+        let backend = TestBackend::new(100, 30);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let pbt_tui = PlaybackTui::default();
+
+        terminal
+            .draw(|f| {
+                pbt_tui.render(f, f.area());
+            })
+            .unwrap();
+    }
+}
+
