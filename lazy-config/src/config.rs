@@ -1,11 +1,11 @@
 use crate::types::Keymaps;
+use color_eyre::eyre::{Context, Result};
+use serde::{Deserialize, Serialize};
 use std::{
     env,
-    error::Error,
     path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
 /// 应用程序配置结构体
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LazyConfig {
@@ -46,25 +46,15 @@ impl LazyConfig {
     ///   - 支持 `~` 开头的路径扩展。
     ///   - 如果读取失败，会回退到默认配置路径。
     /// - 如果 `path` 为 `None`，则只尝试读取默认配置路径。
-    ///
-    /// # 参数
-    /// - `path`: `Option<&Path>`，要读取的配置文件路径。
-    ///
-    /// # 返回
-    /// - `Ok(Self)`: 成功加载并解析的 `LazyConfig` 实例。
-    /// - `Err(Box<dyn Error>)`: 读取或解析失败。
-    pub async fn load(path: Option<&Path>) -> Result<Self, Box<dyn Error>> {
-        let default_conf = Self::default();
-        let default_path = &default_conf.path;
+    pub async fn load(path: Option<&Path>) -> Result<Self> {
+        let default_path = Self::default().path;
 
         // 处理用户提供的路径，包括 `~` 扩展
         let user_path = path.map(|p| {
             if p.starts_with("~") {
-                if let Ok(home) = std::env::var("HOME") {
-                    PathBuf::from(home).join(p.strip_prefix("~").unwrap())
-                } else {
-                    p.to_path_buf() // HOME 未设置，按原样使用路径
-                }
+                env::var("HOME")
+                    .map(|home| PathBuf::from(home).join(p.strip_prefix("~").unwrap()))
+                    .unwrap_or_else(|_| p.to_path_buf())
             } else {
                 p.to_path_buf()
             }
@@ -74,42 +64,36 @@ impl LazyConfig {
         let (contents, final_path) = if let Some(p) = user_path {
             // 优先读取用户指定的路径
             match tokio::fs::read_to_string(&p).await {
-                Ok(c) => (c, p), // 成功
+                Ok(c) => (c, p),
                 Err(e_user) => {
-                    // 失败，则尝试回退到默认路径
-                    match tokio::fs::read_to_string(default_path).await {
-                        Ok(c) => (c, default_path.to_path_buf()),
-                        Err(e_default) => {
-                            // 两个路径都失败，返回组合错误信息
-                            return Err(format!(
-                                "无法从 '{}' 读取配置 (错误: {})，也无法从备用路径 '{}' 读取 (错误: {})",
+                    // 如果主要路径失败，则尝试备用路径。
+                    // `?` 会在备用路径也失败时，将带有完整上下文的错误向上传播。
+                    let fallback_contents = tokio::fs::read_to_string(&default_path)
+                        .await
+                        .wrap_err_with(|| {
+                            format!(
+                                "尝试主要路径 '{}' (失败: {}) 后，读取备用路径 '{}' 也失败",
                                 p.display(),
                                 e_user,
-                                default_path.display(),
-                                e_default
+                                default_path.display()
                             )
-                            .into());
-                        }
-                    }
+                        })?;
+                    (fallback_contents, default_path)
                 }
             }
         } else {
             // 如果没有提供路径，则只读取默认路径
-            match tokio::fs::read_to_string(default_path).await {
-                Ok(c) => (c, default_path.to_path_buf()),
-                Err(e) => {
-                    return Err(format!(
-                        "无法从默认路径 '{}' 读取配置 (错误: {})",
-                        default_path.display(),
-                        e
-                    )
-                    .into());
-                }
-            }
+            let contents = tokio::fs::read_to_string(&default_path)
+                .await
+                .wrap_err_with(|| {
+                    format!("无法从默认路径 '{}' 读取配置", default_path.display())
+                })?;
+            (contents, default_path)
         };
 
         // 从文件内容反序列化
-        let mut config: Self = toml::from_str(&contents)?;
+        let mut config: Self = toml::from_str(&contents).wrap_err("解析 TOML 文件内容失败")?;
+
         // 恢复正确的配置文件路径
         config.path = final_path;
 
