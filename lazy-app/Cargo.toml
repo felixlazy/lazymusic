@@ -1,0 +1,15 @@
+[package]
+name = "lazy-app"
+version = "0.1.0"
+edition = "2024"
+default-run = "lazy_music"
+
+[[bin]]
+name = "lazy_music"
+path = "./src/main.rs"
+
+[dependencies]
+ratatui.workspace = true
+tokio.workspace = true
+crossterm = { version = "0.29.0", features = ["event-stream"] }
+tokio-stream = "0.1.17"

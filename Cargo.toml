@@ -1,0 +1,5 @@
+[workspace]
+members = ["lazy-app"]
+[workspace.dependencies]
+ratatui = { version = "0.29.0", features = ["all-widgets"] }
+tokio = { version = "1.48.0", features = ["full"] }
