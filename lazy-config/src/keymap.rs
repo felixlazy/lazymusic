@@ -176,6 +176,57 @@ pub fn parse_key_string(keymap: impl AsRef<str>) -> Option<(KeyCode, KeyModifier
     }
 }
 
+/// 将 `(KeyCode, KeyModifiers)` 元组格式化为快捷键字符串。
+///
+/// 这是 `parse_key_string` 的逆向操作。
+pub fn format_key_string(code: KeyCode, modifiers: KeyModifiers) -> String {
+    // Simple case: single char, no modifiers. This is the only case not wrapped in <...>. 
+    if modifiers == KeyModifiers::NONE {
+        if let KeyCode::Char(c) = code {
+            return c.to_string();
+        }
+    }
+
+    let mut parts = Vec::new();
+
+    // Add modifiers in a consistent order (c, a, s)
+    if modifiers.contains(KeyModifiers::CONTROL) {
+        parts.push("c");
+    }
+    if modifiers.contains(KeyModifiers::ALT) {
+        parts.push("a");
+    }
+    if modifiers.contains(KeyModifiers::SHIFT) {
+        parts.push("s");
+    }
+
+    let key_part_str = match code {
+        // For modified chars, parse_key_string converts them to lowercase.
+        KeyCode::Char(c) => c.to_lowercase().to_string(),
+        KeyCode::Enter => "enter".to_string(),
+        KeyCode::Tab => "tab".to_string(),
+        KeyCode::Backspace => "backspace".to_string(),
+        KeyCode::Esc => "esc".to_string(),
+        KeyCode::Left => "left".to_string(),
+        KeyCode::Right => "right".to_string(),
+        KeyCode::Up => "up".to_string(),
+        KeyCode::Down => "down".to_string(),
+        KeyCode::Home => "home".to_string(),
+        KeyCode::End => "end".to_string(),
+        KeyCode::PageUp => "pageup".to_string(),
+        KeyCode::PageDown => "pagedown".to_string(),
+        KeyCode::Delete => "delete".to_string(),
+        KeyCode::Insert => "insert".to_string(),
+        KeyCode::F(n) => format!("f{}", n),
+        // This function does not need to be exhaustive for all KeyCodes,
+        // only for those that can be parsed by `parse_key_string`.
+        _ => "unknown".to_string(),
+    };
+
+    parts.push(key_part_str.as_str());
+    format!("<{}>", parts.join("-"))
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -302,6 +353,60 @@ mod test {
         assert_eq!(
             hashmap.get(&(KeyCode::Char('p'), KeyModifiers::CONTROL)),
             Some(&KeyStatus::TogglePlay)
+        );
+    }
+
+    #[test]
+    fn test_format_key_string() {
+        // Single characters
+        assert_eq!(
+            format_key_string(KeyCode::Char('q'), KeyModifiers::NONE),
+            "q"
+        );
+        assert_eq!(
+            format_key_string(KeyCode::Char('A'), KeyModifiers::NONE),
+            "A"
+        );
+
+        // Special keys
+        assert_eq!(
+            format_key_string(KeyCode::Enter, KeyModifiers::NONE),
+            "<enter>"
+        );
+        assert_eq!(
+            format_key_string(KeyCode::F(5), KeyModifiers::NONE),
+            "<f5>"
+        );
+
+        // Simple modifiers
+        assert_eq!(
+            format_key_string(KeyCode::Char('a'), KeyModifiers::CONTROL),
+            "<c-a>"
+        );
+        // It should lowercase the character
+        assert_eq!(
+            format_key_string(KeyCode::Char('A'), KeyModifiers::CONTROL),
+            "<c-a>"
+        );
+        assert_eq!(
+            format_key_string(KeyCode::Enter, KeyModifiers::CONTROL),
+            "<c-enter>"
+        );
+
+        // Multiple modifiers (order should be consistent: c-a-s)
+        assert_eq!(
+            format_key_string(
+                KeyCode::Char('b'),
+                KeyModifiers::CONTROL | KeyModifiers::SHIFT
+            ),
+            "<c-s-b>"
+        );
+        assert_eq!(
+            format_key_string(
+                KeyCode::F(11),
+                KeyModifiers::CONTROL | KeyModifiers::ALT | KeyModifiers::SHIFT
+            ),
+            "<c-a-s-f11>"
         );
     }
 }
