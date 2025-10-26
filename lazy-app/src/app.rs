@@ -1,7 +1,8 @@
 //! `App` 模块，定义了应用程序的主要结构和逻辑。
 
-use std::error::Error;
+use std::{collections::HashMap, error::Error};
 
+use lazy_config::config::LazyConfig;
 use lazy_core::types::KeyStatus;
 // 从 tokio 中导入时间相关的组件
 use tokio::time::{Duration, Interval, MissedTickBehavior, interval};
@@ -16,6 +17,7 @@ pub struct App {
     running: bool,          // 表示应用程序是否正在运行
     event: EventHandler,    // 事件处理器，负责处理用户输入
     tui_interval: Interval, // TUI 刷新定时器
+    config: LazyConfig,
 }
 
 impl Default for App {
@@ -30,6 +32,7 @@ impl Default for App {
             running: Default::default(),
             event: Default::default(),
             tui_interval,
+            config: Default::default(),
         }
     }
 }
@@ -43,6 +46,10 @@ impl App {
     pub async fn run(&mut self) -> Result<(), Box<dyn Error>> {
         self.start(); // 设置程序状态为运行中
 
+        self.config = LazyConfig::load(None).await?;
+        if let Some(keymaps) = self.config.keymap.as_ref() {
+            self.event.add_keybindings(keymaps.into());
+        }
         // 主循环：程序运行期间不断处理事件和定时器
         while self.running {
             tokio::select! {

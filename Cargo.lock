@@ -382,6 +382,7 @@ name = "lazy-app"
 version = "0.1.0"
 dependencies = [
  "crossterm 0.29.0",
+ "lazy-config",
  "lazy-core",
  "ratatui",
  "tokio",
@@ -393,6 +394,7 @@ name = "lazy-config"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "crossterm 0.29.0",
  "lazy-core",
  "serde",
  "tokio",

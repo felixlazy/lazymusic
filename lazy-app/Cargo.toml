@@ -14,3 +14,4 @@ tokio.workspace = true
 crossterm = { version = "0.29.0", features = ["event-stream"] }
 tokio-stream = "0.1.17"
 lazy-core = { path = "../lazy-core/" }
+lazy-config = { path = "../lazy-config/" }

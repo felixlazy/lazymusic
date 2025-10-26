@@ -1,4 +1,4 @@
-use crate::types::Keymaps;
+use crate::keymap::Keymaps;
 use color_eyre::eyre::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{
