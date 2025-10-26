@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 /// 定义按键状态枚举，用于表示用户操作
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum KeyStatus {
     #[serde(rename = "quit")]
     Quit, // 退出程序

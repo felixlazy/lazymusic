@@ -1,6 +1,6 @@
 //! `App` 模块，定义了应用程序的主要结构和逻辑。
 
-use std::{collections::HashMap, error::Error};
+use std::error::Error;
 
 use lazy_config::config::LazyConfig;
 use lazy_core::types::KeyStatus;
@@ -50,6 +50,7 @@ impl App {
         if let Some(keymaps) = self.config.keymap.as_ref() {
             self.event.add_keybindings(keymaps.into());
         }
+
         // 主循环：程序运行期间不断处理事件和定时器
         while self.running {
             tokio::select! {

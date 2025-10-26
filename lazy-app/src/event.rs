@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crossterm::event::{Event, EventStream, KeyCode, KeyEventKind, KeyModifiers};
 use lazy_core::types::KeyStatus;
@@ -73,9 +73,21 @@ impl EventHandler {
         KeyStatus::NoOp // 非按键事件返回 NoOp
     }
 
-    /// 添加或扩展自定义按键绑定
+    /// 添加或扩展自定义按键绑定。
+    ///
+    /// 此方法会先移除 `self.keymap` 中任何与 `key_bindings` 中的值（`KeyStatus`）
+    /// 相同的旧绑定，然后再将新的绑定添加进去。
+    /// 这确保了每个 `KeyStatus` 只会由最新的配置来触发。
     pub fn add_keybindings(&mut self, key_bindings: HashMap<(KeyCode, KeyModifiers), KeyStatus>) {
-        self.keymap.extend(key_bindings); // 合并新的按键映射
+        // 1. 收集新绑定中所有出现过的 `KeyStatus`。
+        let values_to_replace: HashSet<KeyStatus> = key_bindings.values().copied().collect();
+
+        // 2. 从现有 keymap 中移除所有与新值冲突的旧绑定。
+        self.keymap
+            .retain(|_key, value| !values_to_replace.contains(value));
+
+        // 3. 添加新的按键绑定。
+        self.keymap.extend(key_bindings);
     }
 }
 
@@ -189,5 +201,38 @@ mod tests {
             KeyEventKind::Press,
         ));
         assert_eq!(event_handler.handle_event(&event), KeyStatus::Quit);
+    }
+
+    #[test]
+    fn test_add_keybindings_replaces_by_value() {
+        let mut event_handler = EventHandler {
+            events: None,
+            keymap: EventHandler::default_keybindings(), // Contains (q, Quit)
+        };
+
+        // Create a new binding where a different key maps to Quit
+        let mut new_bindings = HashMap::new();
+        new_bindings.insert((KeyCode::Char('x'), KeyModifiers::CONTROL), KeyStatus::Quit);
+        event_handler.add_keybindings(new_bindings);
+
+        // 1. The old key 'q' should no longer map to Quit. It should be NoOp.
+        let event_q = Event::Key(KeyEvent::new_with_kind(
+            KeyCode::Char('q'),
+            KeyModifiers::NONE,
+            KeyEventKind::Press,
+        ));
+        assert_eq!(event_handler.handle_event(&event_q), KeyStatus::NoOp);
+
+        // 2. The new key '<c-x>' should now map to Quit.
+        let event_cx = Event::Key(KeyEvent::new_with_kind(
+            KeyCode::Char('x'),
+            KeyModifiers::CONTROL,
+            KeyEventKind::Press,
+        ));
+        assert_eq!(event_handler.handle_event(&event_cx), KeyStatus::Quit);
+
+        // 3. Check total size to be sure
+        // Default has 14 items. We removed one and added one. So still 14.
+        assert_eq!(event_handler.keymap.len(), 14);
     }
 }
