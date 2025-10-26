@@ -1,5 +1,6 @@
-use crate::keymap::Keymaps;
+use crate::keymap::{ActionArgument, KeymapConfig, Keymaps};
 use color_eyre::eyre::{Context, Result};
+use lazy_core::types::KeyStatus;
 use serde::{Deserialize, Serialize};
 use std::{
     env,
@@ -98,5 +99,129 @@ impl LazyConfig {
         config.path = final_path;
 
         Ok(config)
+    }
+
+    /// 如果默认配置文件不存在，则创建并写入一组默认配置。
+    ///
+    /// # 返回
+    ///
+    /// - `Ok(PathBuf)`: 如果文件已存在或成功创建，则返回配置文件的路径。
+    /// - `Err(eyre::Report)`: 如果创建目录或写入文件失败。
+    pub async fn write_default_if_not_exists() -> Result<PathBuf> {
+        let mut config = Self::default();
+        let path = config.path.clone();
+
+        // 如果文件已存在，则不执行任何操作
+        if path.exists() {
+            return Ok(path);
+        }
+
+        // 创建一组合理的默认键位映射
+        let default_keymaps = Keymaps {
+            configs: vec![
+                KeymapConfig {
+                    on: "q".to_string(),
+                    run: KeyStatus::Quit,
+                    argument: None,
+                    desc: Some("退出程序".to_string()),
+                },
+                KeymapConfig {
+                    on: "+".to_string(),
+                    run: KeyStatus::VolumeIncrease,
+                    argument: Some(ActionArgument::Value(10)),
+                    desc: Some("音量增加 10".to_string()),
+                },
+                KeymapConfig {
+                    on: "-".to_string(),
+                    run: KeyStatus::VolumeDecrease,
+                    argument: Some(ActionArgument::Value(10)),
+                    desc: Some("音量减少 10".to_string()),
+                },
+                KeymapConfig {
+                    on: "L".to_string(),
+                    run: KeyStatus::NavbarNext,
+                    argument: None,
+                    desc: Some("下一个选项".to_string()),
+                },
+                KeymapConfig {
+                    on: "H".to_string(),
+                    run: KeyStatus::NavbarPrev,
+                    argument: None,
+                    desc: Some("上一个选项".to_string()),
+                },
+                KeymapConfig {
+                    on: "j".to_string(),
+                    run: KeyStatus::PickerNext,
+                    argument: None,
+                    desc: Some("下一个选项".to_string()),
+                },
+                KeymapConfig {
+                    on: "k".to_string(),
+                    run: KeyStatus::PickerPrev,
+                    argument: None,
+                    desc: Some("上一个选项".to_string()),
+                },
+                KeymapConfig {
+                    on: "]".to_string(),
+                    run: KeyStatus::NextTrack,
+                    argument: None,
+                    desc: Some("上一首".to_string()),
+                },
+                KeymapConfig {
+                    on: "[".to_string(),
+                    run: KeyStatus::PrevTrack,
+                    argument: None,
+                    desc: Some("下一首".to_string()),
+                },
+                KeymapConfig {
+                    on: "m".to_string(),
+                    run: KeyStatus::SwitchMode,
+                    argument: None,
+                    desc: Some("切换模式".to_string()),
+                },
+                KeymapConfig {
+                    on: "l".to_string(),
+                    run: KeyStatus::ProgressIncrease,
+                    argument: Some(ActionArgument::Value(10)),
+                    desc: Some("进度增加 10s".to_string()),
+                },
+                KeymapConfig {
+                    on: "h".to_string(),
+                    run: KeyStatus::ProgressDecrease,
+                    argument: Some(ActionArgument::Value(10)),
+                    desc: Some("进度减少 10s".to_string()),
+                },
+                KeymapConfig {
+                    on: "<enter>".to_string(),
+                    run: KeyStatus::PlaySelected,
+                    argument: None,
+                    desc: Some("播放选中的".to_string()),
+                },
+                KeymapConfig {
+                    on: "p".to_string(),
+                    run: KeyStatus::TogglePlay,
+                    argument: None,
+                    desc: Some("切换播放".to_string()),
+                },
+            ],
+        };
+        config.keymap = Some(default_keymaps);
+
+        // 确保父目录存在
+        if let Some(parent) = path.parent() {
+            tokio::fs::create_dir_all(parent)
+                .await
+                .wrap_err("无法创建配置目录")?;
+        }
+
+        // 序列化为格式化的 TOML 字符串
+        let toml_string = toml::to_string_pretty(&config).wrap_err("无法序列化默认配置")?;
+
+        // 写入文件
+        tokio::fs::write(&path, toml_string)
+            .await
+            .wrap_err("无法写入默认配置文件")?;
+
+        Ok(path)
     }
 }

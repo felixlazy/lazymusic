@@ -89,6 +89,10 @@ impl EventHandler {
         // 3. 添加新的按键绑定。
         self.keymap.extend(key_bindings);
     }
+
+    pub fn read_keybindings(&self) -> HashMap<(KeyCode, KeyModifiers), KeyStatus> {
+        self.keymap.clone()
+    }
 }
 
 /// 默认实现，调用 new() 构造
