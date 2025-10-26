@@ -33,10 +33,6 @@ pub struct KeymapConfig {
     /// 按下按键时要执行的操作。
     pub run: KeyStatus,
     /// 为 'run' 命令提供额外的参数。
-    /// Благодаря `#[serde(untagged)]` on `ActionArgument`,
-    /// 你可以直接在 TOML 中写值，例如：
-    /// `argument = 10`  (对应 Value(10))
-    /// `argument = true` (对应 Enable(true))
     pub argument: Option<ActionArgument>,
     /// 对键位映射功能的可选描述。
     pub desc: Option<String>,
@@ -63,6 +59,26 @@ impl From<&Keymaps> for HashMap<(KeyCode, KeyModifiers), KeyStatus> {
                 parse_key_string(&keymap_config.on).map(|key| (key, keymap_config.run))
             })
             .collect()
+    }
+}
+
+/// 从 `HashMap` 转换为 `Keymaps`，用于将程序内部的键位映射转换回可配置的结构。
+///
+/// 这个实现遍历 `HashMap` 中的所有条目，
+/// 使用 `format_key_string` 函数将 `(KeyCode, KeyModifiers)` 键转换回字符串形式的 `on` 字段。
+/// `argument` 和 `desc` 字段会被设置为默认值 `None`。
+impl From<HashMap<(KeyCode, KeyModifiers), KeyStatus>> for Keymaps {
+    fn from(value: HashMap<(KeyCode, KeyModifiers), KeyStatus>) -> Self {
+        Self {
+            configs: value
+                .into_iter()
+                .map(|((code, modifiers), status)| KeymapConfig {
+                    on: format_key_string(code, modifiers),
+                    run: status,
+                    ..Default::default()
+                })
+                .collect(),
+        }
     }
 }
 /// 将快捷键字符串解析为 `(KeyCode, KeyModifiers)` 元组。
@@ -180,11 +196,11 @@ pub fn parse_key_string(keymap: impl AsRef<str>) -> Option<(KeyCode, KeyModifier
 ///
 /// 这是 `parse_key_string` 的逆向操作。
 pub fn format_key_string(code: KeyCode, modifiers: KeyModifiers) -> String {
-    // Simple case: single char, no modifiers. This is the only case not wrapped in <...>. 
-    if modifiers == KeyModifiers::NONE {
-        if let KeyCode::Char(c) = code {
-            return c.to_string();
-        }
+    // Simple case: single char, no modifiers. This is the only case not wrapped in <...>.
+    if modifiers == KeyModifiers::NONE
+        && let KeyCode::Char(c) = code
+    {
+        return c.to_string();
     }
 
     let mut parts = Vec::new();
@@ -373,10 +389,7 @@ mod test {
             format_key_string(KeyCode::Enter, KeyModifiers::NONE),
             "<enter>"
         );
-        assert_eq!(
-            format_key_string(KeyCode::F(5), KeyModifiers::NONE),
-            "<f5>"
-        );
+        assert_eq!(format_key_string(KeyCode::F(5), KeyModifiers::NONE), "<f5>");
 
         // Simple modifiers
         assert_eq!(
@@ -408,5 +421,32 @@ mod test {
             ),
             "<c-a-s-f11>"
         );
+    }
+
+    #[test]
+    fn test_keymaps_from_hashmap_conversion() {
+        let mut hashmap = HashMap::new();
+        hashmap.insert((KeyCode::Char('q'), KeyModifiers::NONE), KeyStatus::Quit);
+        hashmap.insert(
+            (KeyCode::Char('p'), KeyModifiers::CONTROL),
+            KeyStatus::TogglePlay,
+        );
+
+        let keymaps: Keymaps = hashmap.into();
+
+        assert_eq!(keymaps.configs.len(), 2);
+
+        // We can't rely on the order, so we need to check for existence.
+        let config1_found = keymaps
+            .configs
+            .iter()
+            .any(|c| c.on == "q" && c.run == KeyStatus::Quit);
+        let config2_found = keymaps
+            .configs
+            .iter()
+            .any(|c| c.on == "<c-p>" && c.run == KeyStatus::TogglePlay);
+
+        assert!(config1_found, "Config for 'q' not found or incorrect");
+        assert!(config2_found, "Config for '<c-p>' not found or incorrect");
     }
 }
