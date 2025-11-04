@@ -1,7 +1,5 @@
 //! `App` 模块，定义了应用程序的主要结构和逻辑。
 
-use std::error::Error;
-
 use lazy_config::config::LazyConfig;
 use lazy_core::types::KeyStatus;
 // 从 tokio 中导入时间相关的组件
@@ -43,7 +41,7 @@ impl App {
     /// # Returns
     ///
     /// * `Result<(), Box<dyn Error>>` - 如果成功，返回 `Ok(())`，否则返回一个错误。
-    pub async fn run(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn run(&mut self) -> color_eyre::Result<()> {
         self.start(); // 设置程序状态为运行中
 
         self.config = LazyConfig::load(None).await?;

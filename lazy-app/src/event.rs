@@ -43,14 +43,16 @@ impl EventHandler {
     }
 
     /// 异步读取下一个按键事件，并返回对应的 KeyStatus
+    #[tracing::instrument(skip(self))]
     pub async fn next_key_status(&mut self) -> Option<KeyStatus> {
         if let Some(events) = self.events.as_mut() {
             events.next().await.and_then(|maybe_result| {
                 maybe_result
                     // 如果事件流出错，打印错误信息
-                    .map_err(|e| eprintln!("Event stream error: {:?}", e))
+                    .map_err(|e| tracing::error!("Event stream error: {:?}", e))
                     .ok()
                     .map(|event| self.handle_event(&event)) // 将 Event 转换为 KeyStatus
+                    .inspect(|key_status| tracing::debug!("按键功能: {:#?}", key_status))
             })
         } else {
             None
@@ -62,6 +64,7 @@ impl EventHandler {
         if let Event::Key(key) = event {
             // 如果事件是按键事件
             if key.kind == KeyEventKind::Press {
+                tracing::trace!("按下的按键{:?}", key.code);
                 // 只处理按下事件（忽略释放/重复）
                 return self
                     .keymap
